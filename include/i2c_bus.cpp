@@ -7,6 +7,9 @@ extern "C"
 	#include <linux/i2c-dev.h>
 }
 
+#ifndef BUS
+#define BUS
+
 class I2C_BUS
 {
 public:
@@ -57,3 +60,5 @@ private:
 	__u16 _device_address;
 	bool _first_address_was_set = false;
 };
+
+#endif

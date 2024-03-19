@@ -2,27 +2,14 @@
 #include <ctime>
 #include <chrono>
 #include <string.h>
-#include "include/i2c_bus.cpp"
-//#include "include/ads1115.cpp"
-#include "include/bme280.cpp"
+//#include "include/i2c_bus.cpp"
+#include "include/ads1115.cpp"
 #include "include/dumper.cpp"
 
 #define SAMPLE_TIME 60000000 // useconds
 #define AVERAGE 60 // number of samples to average over the sampling time
 #define SLEEP_TIME SAMPLE_TIME / AVERAGE
 
-int main()
-{
-	I2C_BUS i2c_bus = I2C_BUS(0);
-	BME280 bme280 = BME280(&i2c_bus, 0x76);
-	//adc.set_config(1);
-
-    std::cout << bme280.read_temperature() <<  std::endl;
-
-	return 0;
-}
-
-/**
 int main()
 {
 	I2C_BUS i2c_bus = I2C_BUS(0);
@@ -54,4 +41,3 @@ int main()
 	}
 	return 0;
 }
-**/

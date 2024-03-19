@@ -1,5 +1,8 @@
 #include "i2c_bus.cpp"
 
+#ifndef BME
+#define BME
+
 enum
 {
     BME280_REGISTER_DIG_T1 = 0x88,
@@ -47,30 +50,31 @@ enum sensor_mode
 
 typedef struct
 {
-    uint16_t dig_T1; ///< temperature compensation value
-    int16_t dig_T2;  ///< temperature compensation value
-    int16_t dig_T3;  ///< temperature compensation value
+    __u16 dig_T1; ///< temperature compensation value
+    __s16 dig_T2;  ///< temperature compensation value
+    __s16 dig_T3;  ///< temperature compensation value
 
-    uint16_t dig_P1; ///< pressure compensation value
-    int16_t dig_P2;  ///< pressure compensation value
-    int16_t dig_P3;  ///< pressure compensation value
-    int16_t dig_P4;  ///< pressure compensation value
-    int16_t dig_P5;  ///< pressure compensation value
-    int16_t dig_P6;  ///< pressure compensation value
-    int16_t dig_P7;  ///< pressure compensation value
-    int16_t dig_P8;  ///< pressure compensation value
-    int16_t dig_P9;  ///< pressure compensation value
+    __u16 dig_P1; ///< pressure compensation value
+    __s16 dig_P2;  ///< pressure compensation value
+    __s16 dig_P3;  ///< pressure compensation value
+    __s16 dig_P4;  ///< pressure compensation value
+    __s16 dig_P5;  ///< pressure compensation value
+    __s16 dig_P6;  ///< pressure compensation value
+    __s16 dig_P7;  ///< pressure compensation value
+    __s16 dig_P8;  ///< pressure compensation value
+    __s16 dig_P9;  ///< pressure compensation value
 
-    uint8_t dig_H1; ///< humidity compensation value
-    int16_t dig_H2; ///< humidity compensation value
-    uint8_t dig_H3; ///< humidity compensation value
-    int16_t dig_H4; ///< humidity compensation value
-    int16_t dig_H5; ///< humidity compensation value
-    int8_t dig_H6;  ///< humidity compensation value
+    __u8 dig_H1; ///< humidity compensation value
+    __s16 dig_H2; ///< humidity compensation value
+    __u8 dig_H3; ///< humidity compensation value
+    __s16 dig_H4; ///< humidity compensation value
+    __s16 dig_H5; ///< humidity compensation value
+    __s8 dig_H6;  ///< humidity compensation value
 } bme280_calib_data;
 
 class BME280
 {
+public:
     BME280(I2C_BUS* i2c_bus, __u16 device_address = 0x77)
 	{
 		_i2c_bus = i2c_bus;
@@ -86,7 +90,10 @@ class BME280
         write8(BME280_REGISTER_SOFTRESET, 0xB6);
 
         while(is_reading_calibration())
+        {
             usleep(10000);
+            std::cout << "reading calibration...\n";
+        }
 
     read_coefficients();
 
@@ -96,6 +103,27 @@ class BME280
 
     usleep(100000);
 
+    }
+
+    float read_temperature()
+    {
+        __s32 var1, var2;
+
+        __s32 adc_T = read24(BME280_REGISTER_TEMPDATA);
+        if (adc_T == 0x800000) // value in case temp measurement was disabled
+            return -1;
+        adc_T >>= 4;
+
+        var1 = (__s32)((adc_T / 8) - ((__s32)_bme280_calib.dig_T1 * 2));
+        var1 = (var1 * ((__s32)_bme280_calib.dig_T2)) / 2048;
+        var2 = (__s32)((adc_T / 16) - ((__s32)_bme280_calib.dig_T1));
+        var2 = (((var2 * var2) / 4096) * ((__s32)_bme280_calib.dig_T3)) / 16384;
+
+        __s32 t_fine = var1 + var2; // + t_fine_adjust; for now consider t_fine_to_be_zero
+
+        __s32 T = (t_fine * 5 + 128) / 256;
+
+        return (float)T / 100;
     }
 
 private:
@@ -134,6 +162,15 @@ private:
         return __u16(buffer[0]) << 8 | __u16(buffer[1]);
     }
 
+    __u32 read24(__u8 reg)
+    {
+        __u8 buffer[3];
+        buffer[0] = __u8(reg);
+        _i2c_bus->write_to_device(&reg, 1);
+        _i2c_bus->read_from_device(buffer, 3);
+        return __u32(buffer[0]) << 16 | __u32(buffer[1]) << 8 | __u32(buffer[2]);
+    }
+
     __u16 read16_LE(__u8 reg)
     {
         __u16 temp = read16(reg);
@@ -164,11 +201,16 @@ private:
         _bme280_calib.dig_H1 = read8(BME280_REGISTER_DIG_H1);
         _bme280_calib.dig_H2 = readS16_LE(BME280_REGISTER_DIG_H2);
         _bme280_calib.dig_H3 = read8(BME280_REGISTER_DIG_H3);
-        _bme280_calib.dig_H4 = ((int8_t)read8(BME280_REGISTER_DIG_H4) << 4) |
+        _bme280_calib.dig_H4 = ((__s8)read8(BME280_REGISTER_DIG_H4) << 4) |
                          (read8(BME280_REGISTER_DIG_H4 + 1) & 0xF);
-        _bme280_calib.dig_H5 = ((int8_t)read8(BME280_REGISTER_DIG_H5 + 1) << 4) |
+        _bme280_calib.dig_H5 = ((__s8)read8(BME280_REGISTER_DIG_H5 + 1) << 4) |
                          (read8(BME280_REGISTER_DIG_H5) >> 4);
-        _bme280_calib.dig_H6 = (int8_t)read8(BME280_REGISTER_DIG_H6);
+        _bme280_calib.dig_H6 = (__s8)read8(BME280_REGISTER_DIG_H6);
+
+        std::cout << "some values:" << std::endl;
+        std::cout << _bme280_calib.dig_H6 << std::endl;
+        std::cout << _bme280_calib.dig_H5 << std::endl;
+        std::cout << _bme280_calib.dig_H1 << std::endl;
     }
 
     void set_sampling()
@@ -191,3 +233,5 @@ private:
 	__u8 _buffer[3];
     bme280_calib_data _bme280_calib;
 };
+
+#endif
