@@ -2,8 +2,9 @@
 #include <ctime>
 #include <chrono>
 #include <string.h>
+#include <sstream>
 #include "include/i2c_bus.cpp"
-//#include "include/ads1115.cpp"
+#include "include/ads1115.cpp"
 #include "include/bme280.cpp"
 #include "include/dumper.cpp"
 
@@ -15,46 +16,33 @@ int main()
 {
 	I2C_BUS i2c_bus = I2C_BUS(0);
 	BME280 bme280 = BME280(&i2c_bus, 0x76);
-    float T, P, H;
-	bme280.read_all(T, P, H);
+    ADS1115 adc = ADS1115(&i2c_bus, 0x48);
+    adc.set_config(1);
 
-    std::cout << "T = " << T <<  std::endl;
-    std::cout << "P = " << P <<  std::endl;
-    std::cout << "H = " << H <<  std::endl;
-
-	return 0;
-}
-
-/**
-int main()
-{
-	I2C_BUS i2c_bus = I2C_BUS(0);
-	ADS1115 adc = ADS1115(&i2c_bus, 0x48);
-	adc.set_config(1);
-    
     Dumper dumper("log.txt");
 
-	while (true)
-	{
-        float average_T = 0;
+    while (true)
+    {
+        float T, P, H;
+        float average_T_int = 0;
         for (size_t i = 0; i < AVERAGE; i++)
         {
-		    float T = -66.875 + 218.75 * adc.read_voltage() / 3.3;
-            average_T += T;
+		    float T_int = -66.875 + 218.75 * adc.read_voltage() / 3.3;
+            average_T_int += T_int;
             usleep(SLEEP_TIME);
         }
-        average_T /= AVERAGE;
+        average_T_int /= AVERAGE;
+        int ret_code = bme280.read_all(T, P, H);
 
-		auto timenow = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+        auto timenow = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
 
-        std::string info_str = std::string(strtok(ctime(&timenow), "\n"));
+        std::ostringstream info;
+        info << std::string(strtok(ctime(&timenow), "\n")) << '\t' << T << '\t' << H << '\t' << P << '\t' << average_T_int << '\t' << ret_code;
 
-        info_str += std::string("\t") + std::to_string(average_T);
+        std::cout << info.str() << std::endl;
 
-    	std::cout << info_str << std::endl;
+        dumper.dump(info.str());
+    }
 
-        dumper.dump(info_str);
-	}
 	return 0;
 }
-**/

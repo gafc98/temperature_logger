@@ -1,5 +1,8 @@
 #include "i2c_bus.cpp"
 
+#ifndef _ADS1115_
+#define _ADS1115_
+
 static const float FULL_SCALES[] = {6.144, 4.096, 2.048, 1.024, 0.512, 0.256};
 
 class ADS1115
@@ -46,3 +49,5 @@ private:
 	I2C_BUS* _i2c_bus;
 	__u8 _buffer[3];
 };
+
+#endif

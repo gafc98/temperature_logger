@@ -7,8 +7,8 @@ extern "C"
 	#include <linux/i2c-dev.h>
 }
 
-#ifndef BUS
-#define BUS
+#ifndef _I2C_BUS_
+#define _I2C_BUS_
 
 class I2C_BUS
 {
