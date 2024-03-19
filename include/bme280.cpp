@@ -105,25 +105,78 @@ public:
 
     }
 
-    float read_temperature()
+    __u8 read_all(float & T, float & P, float & H)
     {
-        __s32 var1, var2;
+        __s32 var1_T, var2_T;
 
         __s32 adc_T = read24(BME280_REGISTER_TEMPDATA);
         if (adc_T == 0x800000) // value in case temp measurement was disabled
             return -1;
         adc_T >>= 4;
 
-        var1 = (__s32)((adc_T / 8) - ((__s32)_bme280_calib.dig_T1 * 2));
-        var1 = (var1 * ((__s32)_bme280_calib.dig_T2)) / 2048;
-        var2 = (__s32)((adc_T / 16) - ((__s32)_bme280_calib.dig_T1));
-        var2 = (((var2 * var2) / 4096) * ((__s32)_bme280_calib.dig_T3)) / 16384;
+        var1_T = (__s32)((adc_T / 8) - ((__s32)_bme280_calib.dig_T1 * 2));
+        var1_T = (var1_T * ((__s32)_bme280_calib.dig_T2)) / 2048;
+        var2_T = (__s32)((adc_T / 16) - ((__s32)_bme280_calib.dig_T1));
+        var2_T = (((var2_T * var2_T) / 4096) * ((__s32)_bme280_calib.dig_T3)) / 16384;
 
-        __s32 t_fine = var1 + var2; // + t_fine_adjust; for now consider t_fine_to_be_zero
+        __s32 t_fine = var1_T + var2_T; // + t_fine_adjust; for now consider t_fine_to_be_zero
 
-        __s32 T = (t_fine * 5 + 128) / 256;
+        __s32 t = (t_fine * 5 + 128) / 256;
+        T = (float)t / 100.0; // done with temp
 
-        return (float)T / 100;
+        int64_t var1_P, var2_P, var3_P, var4_P;
+
+        int32_t adc_P = read24(BME280_REGISTER_PRESSUREDATA);
+        if (adc_P == 0x800000) // value in case pressure measurement was disabled
+            return -2;
+        adc_P >>= 4;
+
+        var1_P = ((int64_t)t_fine) - 128000;
+        var2_P = var1_P * var1_P * (int64_t)_bme280_calib.dig_P6;
+        var2_P = var2_P + ((var1_P * (int64_t)_bme280_calib.dig_P5) * 131072);
+        var2_P = var2_P + (((int64_t)_bme280_calib.dig_P4) * 34359738368);
+        var1_P = ((var1_P * var1_P * (int64_t)_bme280_calib.dig_P3) / 256) +
+                ((var1_P * ((int64_t)_bme280_calib.dig_P2) * 4096));
+        var3_P = ((int64_t)1) * 140737488355328;
+        var1_P = (var3_P + var1_P) * ((int64_t)_bme280_calib.dig_P1) / 8589934592;
+
+        if (var1_P == 0)
+            return -3; // avoid exception caused by division by zero
+
+        var4_P = 1048576 - adc_P;
+        var4_P = (((var4_P * 2147483648) - var2_P) * 3125) / var1_P;
+        var1_P = (((int64_t)_bme280_calib.dig_P9) * (var4_P / 8192) * (var4_P / 8192)) /
+                33554432;
+        var2_P = (((int64_t)_bme280_calib.dig_P8) * var4_P) / 524288;
+        var4_P = ((var4_P + var1_P + var2_P) / 256) + (((int64_t)_bme280_calib.dig_P7) * 16);
+
+        P = (float)var4_P / 256.0; // done with pressure
+
+        int32_t var1_H, var2_H, var3_H, var4_H, var5_H;
+
+        int32_t adc_H = read16(BME280_REGISTER_HUMIDDATA);
+        if (adc_H == 0x8000) // value in case humidity measurement was disabled
+            return -4;
+
+        var1_H = t_fine - ((int32_t)76800);
+        var2_H = (int32_t)(adc_H * 16384);
+        var3_H = (int32_t)(((int32_t)_bme280_calib.dig_H4) * 1048576);
+        var4_H = ((int32_t)_bme280_calib.dig_H5) * var1_H;
+        var5_H = (((var2_H - var3_H) - var4_H) + (int32_t)16384) / 32768;
+        var2_H = (var1_H * ((int32_t)_bme280_calib.dig_H6)) / 1024;
+        var3_H = (var1_H * ((int32_t)_bme280_calib.dig_H3)) / 2048;
+        var4_H = ((var2_H * (var3_H + (int32_t)32768)) / 1024) + (int32_t)2097152;
+        var2_H = ((var4_H * ((int32_t)_bme280_calib.dig_H2)) + 8192) / 16384;
+        var3_H = var5_H * var2_H;
+        var4_H = ((var3_H / 32768) * (var3_H / 32768)) / 128;
+        var5_H = var3_H - ((var4_H * ((int32_t)_bme280_calib.dig_H1)) / 16);
+        var5_H = (var5_H < 0 ? 0 : var5_H);
+        var5_H = (var5_H > 419430400 ? 419430400 : var5_H);
+        uint32_t h = (uint32_t)(var5_H / 4096);
+
+        H = (float)h / 1024.0; // done with humidity
+
+        return 0;
     }
 
 private:

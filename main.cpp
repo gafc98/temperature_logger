@@ -15,9 +15,12 @@ int main()
 {
 	I2C_BUS i2c_bus = I2C_BUS(0);
 	BME280 bme280 = BME280(&i2c_bus, 0x76);
-	//adc.set_config(1);
+    float T, P, H;
+	bme280.read_all(T, P, H);
 
-    std::cout << bme280.read_temperature() <<  std::endl;
+    std::cout << "T = " << T <<  std::endl;
+    std::cout << "P = " << P <<  std::endl;
+    std::cout << "H = " << H <<  std::endl;
 
 	return 0;
 }
