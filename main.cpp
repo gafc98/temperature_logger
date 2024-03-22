@@ -23,21 +23,28 @@ int main()
 
     while (true)
     {
-        float T, P, H;
-        float average_T_int = 0;
+        float T_int, T, P, H;
+        float average_T_int = 0, average_T = 0, average_H = 0, average_P = 0;
+        int ret_code_sum = 0;
         for (size_t i = 0; i < AVERAGE; i++)
         {
-		    float T_int = -66.875 + 218.75 * adc.read_voltage() / 3.3;
+		    T_int = -66.875 + 218.75 * adc.read_voltage() / 3.3;
             average_T_int += T_int;
+            ret_code_sum += bme280.read_all(T, P, H);
+            average_T += T;
+            average_H += H;
+            average_P += P;
             usleep(SLEEP_TIME);
         }
         average_T_int /= AVERAGE;
-        int ret_code = bme280.read_all(T, P, H);
+        average_T /= AVERAGE;
+        average_H /= AVERAGE;
+        average_P /= AVERAGE;
 
         auto timenow = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
 
         std::ostringstream info;
-        info << std::string(strtok(ctime(&timenow), "\n")) << '\t' << T << '\t' << H << '\t' << P << '\t' << average_T_int << '\t' << ret_code;
+        info << std::string(strtok(ctime(&timenow), "\n")) << '\t' << average_T << '\t' << average_H << '\t' << average_P << '\t' << average_T_int << '\t' << ret_code_sum;
 
         std::cout << info.str() << std::endl;
 
