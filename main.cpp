@@ -7,6 +7,7 @@
 #include "include/ads1115.cpp"
 #include "include/bme280.cpp"
 #include "include/dumper.cpp"
+#include "include/ssd1306.cpp"
 
 #define SAMPLE_TIME 60000000 // useconds
 #define AVERAGE 60 // number of samples to average over the sampling time

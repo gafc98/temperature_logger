@@ -92,11 +92,13 @@ public:
         while(is_reading_calibration())
         {
             usleep(10000);
-            std::cout << "reading calibration...\n";
+            std::cout << "BME280: reading calibration...\n";
         }
 
+    std::cout << "BME280: reading coeficients.\n";
     read_coefficients();
 
+    std::cout << "BME280: setting sampling.\n";
     set_sampling();
 
     std::cout << "BME280 setup complete!\n";
