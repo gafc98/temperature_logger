@@ -46,22 +46,30 @@ public:
 
     void write_col(__u8 byte)
     {
+        // first set device address to ensure correct communication
+        _i2c_bus->set_device_address(_device_address);
         write8(DATA_REG, byte);
     }
 
     void turn_off_display()
     {
+        // first set device address to ensure correct communication
+        _i2c_bus->set_device_address(_device_address);
         write8(COMMAND_REG, OFF_CMD);
     }
 
     void put_string(std::string str)
     {
+        // first set device address to ensure correct communication
+        _i2c_bus->set_device_address(_device_address);
         for (char & ch : str)
             put_char(ch);
     }
 
     void put_char(char ch)
     {
+        // first set device address to ensure correct communication
+        _i2c_bus->set_device_address(_device_address);
         if (ch < 32 || ch > 127) 
             ch = ' ';
         ch -= 32; // Font array starts at 0, ASCII starts at 32, 2 is offset
