@@ -81,11 +81,18 @@ public:
     {
         // first set device address to ensure correct communication
         _i2c_bus->set_device_address(_device_address);
+
         if (ch < 32 || ch > 127) 
             ch = ' ';
         ch -= 32; // Font array starts at 0, ASCII starts at 32, 2 is offset
+
+        __u8 buffer[1 + font8x8[0]]; // first is register and then font width
+        buffer[0] = DATA_REG;
+        
         for (__u8 i = 0; i < font8x8[0]; i++) // font8x8[0] is font width
-            write8(DATA_REG, font8x8[ch * 8 + 2 + i]);
+            buffer[i+1] = font8x8[ch * 8 + 2 + i];
+        
+        write_buffer(buffer, __u8(9));
     }
 
 private:
