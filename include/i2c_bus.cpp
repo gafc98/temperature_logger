@@ -37,10 +37,22 @@ public:
 			_first_address_was_set = true;
 	}
 
-	void write_to_device(__u8* buffer, __u8 num_bytes)
+	void write_to_device(__u8* buffer, __u16 num_bytes)
 	{
 		if (write(file, buffer, num_bytes) != num_bytes)
 			throw std::runtime_error("Something went wrong when trying to write to device.");
+	}
+
+	void write_buff_repeatidely(__u8 reg, __u8* buffer, __u16 size_buffer, __u16 times_to_write)
+	{
+		if (write(file, &reg, 1) != 1)
+			throw std::runtime_error("Something went wrong when trying to address the device.");
+
+		for (__u16 i = 0, i < times_to_write, i++)
+		{
+			if (write(file, buffer, size_buffer) != size_buffer)
+				throw std::runtime_error("Something went wrong when trying to write to device.");
+		}
 	}
 
 	void read_from_device(__u8* buffer, __u8 num_bytes)

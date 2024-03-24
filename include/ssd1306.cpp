@@ -35,12 +35,18 @@ public:
     {
         // first set device address to ensure correct communication
         _i2c_bus->set_device_address(_device_address);
+        write8(COMMAND_REG, OFF_CMD);
+        __u8 buffer[128];
+        memset(buffer, 0, 128);
+        buffer[0] = DATA_REG;
         for (__u8 page = 0; page <= 7; page++)
         {
             set_cursor(0, page);
-            for (__u8 col = 0; col <= 127; col++)
-                write8(DATA_REG, 0x00);
+            //for (__u8 col = 0; col <= 127; col++)
+            //    write8(DATA_REG, 0x00);
+            write_buffer(buffer, 128);
         }
+        write8(COMMAND_REG, ON_CMD);
         set_cursor(0, 0);
     }
 
@@ -56,6 +62,13 @@ public:
         // first set device address to ensure correct communication
         _i2c_bus->set_device_address(_device_address);
         write8(COMMAND_REG, OFF_CMD);
+    }
+
+    void turn_on_display()
+    {
+        // first set device address to ensure correct communication
+        _i2c_bus->set_device_address(_device_address);
+        write8(COMMAND_REG, ON_CMD);
     }
 
     void put_string(std::string str)
@@ -78,7 +91,7 @@ public:
     }
 
 private:
-    void write8(__u8 reg, __u8 byte)
+    inline void write8(__u8 reg, __u8 byte)
     {
         __u8 buffer[2];
         buffer[0] = reg;
@@ -86,41 +99,11 @@ private:
         _i2c_bus->write_to_device(buffer, 2);
     }
 
-    __u8 read8(__u8 reg)
+    void write_buffer( __u8* buffer, __u8 N)
     {
-        _i2c_bus->write_to_device(&reg, 1);
-        _i2c_bus->read_from_device(&reg, 1);
-        return reg;
+        // buffer[0] should be the register you want to write to
+        _i2c_bus->write_to_device(buffer, N);
     }
-
-    __u16 read16(__u8 reg)
-    {
-        __u8 buffer[2];
-        _i2c_bus->write_to_device(&reg, 1);
-        _i2c_bus->read_from_device(buffer, 2);
-        return __u16(buffer[0]) << 8 | __u16(buffer[1]);
-    }
-
-    __u32 read24(__u8 reg)
-    {
-        __u8 buffer[3];
-        buffer[0] = __u8(reg);
-        _i2c_bus->write_to_device(&reg, 1);
-        _i2c_bus->read_from_device(buffer, 3);
-        return __u32(buffer[0]) << 16 | __u32(buffer[1]) << 8 | __u32(buffer[2]);
-    }
-
-    __u16 read16_LE(__u8 reg)
-    {
-        __u16 temp = read16(reg);
-        return (temp >> 8) | (temp << 8);
-    }
-
-    __s16 readS16_LE(__u8 reg)
-    {
-        return (__s16)read16_LE(reg);
-    }
-
 
     void set_config()
     {

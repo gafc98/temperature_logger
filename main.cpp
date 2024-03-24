@@ -43,7 +43,7 @@ int main()
             average_H += H;
             average_P += P;
 
-            display.clear_display();
+            //display.clear_display();
             display.set_cursor(0, 0);
             display.put_string(to_string(T));
             display.set_cursor(0, 1);
