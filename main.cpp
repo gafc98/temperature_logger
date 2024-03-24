@@ -18,14 +18,21 @@ int main()
     // get main i2c bus object
 	I2C_BUS i2c_bus = I2C_BUS(0);
 
+    // get oled display object
+    SSD1306 display(&i2c_bus, 0x3C);
+    display.clear_display();
+    display.put_string("Inilializing...");
+    usleep(10000000);
+
     // get sensor objects
 	BME280 bme280 = BME280(&i2c_bus, 0x76);
     ADS1115 adc = ADS1115(&i2c_bus, 0x48);
     adc.set_config(1);
-    SSD1306 display(&i2c_bus, 0x3C);
 
     // simple dumper to place logs in
     Dumper dumper("log.txt");
+
+    display.clear_display();
 
     while (true)
     {
@@ -43,7 +50,7 @@ int main()
             average_H += H;
             average_P += P;
 
-            //display.clear_display();
+            display.clear_display();
             display.set_cursor(0, 0);
             display.put_string(to_string(T));
             display.set_cursor(0, 1);

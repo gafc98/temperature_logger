@@ -35,18 +35,16 @@ public:
     {
         // first set device address to ensure correct communication
         _i2c_bus->set_device_address(_device_address);
-        write8(COMMAND_REG, OFF_CMD);
-        __u8 buffer[128];
-        memset(buffer, 0, 128);
+        //write8(COMMAND_REG, OFF_CMD);
+        __u8 buffer[129]; // 128 (number of bytes per page) + 1 (data register)
+        memset(buffer, 0, 129);
         buffer[0] = DATA_REG;
         for (__u8 page = 0; page <= 7; page++)
         {
             set_cursor(0, page);
-            //for (__u8 col = 0; col <= 127; col++)
-            //    write8(DATA_REG, 0x00);
-            write_buffer(buffer, 128);
+            write_buffer(buffer, __u16(129));
         }
-        write8(COMMAND_REG, ON_CMD);
+        //write8(COMMAND_REG, ON_CMD);
         set_cursor(0, 0);
     }
 
@@ -99,7 +97,8 @@ private:
         _i2c_bus->write_to_device(buffer, 2);
     }
 
-    void write_buffer( __u8* buffer, __u8 N)
+    template <typename T>
+    void write_buffer(__u8* buffer, T N)
     {
         // buffer[0] should be the register you want to write to
         _i2c_bus->write_to_device(buffer, N);
