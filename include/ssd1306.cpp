@@ -19,6 +19,7 @@ public:
 	{
 		_i2c_bus = i2c_bus;
 		_device_address = device_address;
+        memset(_chars_in_line, 128 / font8x8[0], 8); // 1st time assumes all lines are full
 		set_config();
 	}
 
@@ -29,6 +30,8 @@ public:
         write8(COMMAND_REG, 0x00 + (x & 0x0F));
         write8(COMMAND_REG, 0x10 + ((x >> 4) & 0x0F));
         write8(COMMAND_REG, 0xB0 + y);
+
+        _current_page = y;
     }
 
     void clear_display()
@@ -42,7 +45,9 @@ public:
         for (__u8 page = 0; page <= 7; page++)
         {
             set_cursor(0, page);
-            write_buffer(buffer, __u16(129));
+            // only needs to clean lines that are known to be written
+            write_buffer(buffer, __u16(_chars_in_line[page] * font8x8[0] + 1));
+            _chars_in_line[page] = 0;
         }
         //write8(COMMAND_REG, ON_CMD);
         set_cursor(0, 0);
@@ -93,6 +98,7 @@ public:
             buffer[i+1] = font8x8[ch * 8 + 2 + i];
         
         write_buffer(buffer, __u8(9));
+        _chars_in_line[_current_page]++;
     }
 
 private:
@@ -134,9 +140,10 @@ private:
         std::cout << "SSD1306: setup complete!\n";
     }
 
-	float _conversion_factor;
 	__u16 _device_address;
 	I2C_BUS* _i2c_bus;
+    __u8 _chars_in_line[8];
+    __u8 _current_page;
 };
 
 

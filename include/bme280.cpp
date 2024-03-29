@@ -187,10 +187,6 @@ private:
     bool is_reading_calibration()
     {
         // BME280_REGISTER_STATUS
-        //buffer[0] = 0XF3;
-        //_i2c_bus->write_to_device(_buffer, 1);
-        //_i2c_bus->read_from_device(_buffer, 1);
-
         __u8 out = read8(0XF3);
 
         return (out & (1 << 0)) != 0;
@@ -284,10 +280,8 @@ private:
         write8(BME280_REGISTER_CONTROL, 111); // 110
     }
 
-	float _conversion_factor;
 	__u16 _device_address;
 	I2C_BUS* _i2c_bus;
-	__u8 _buffer[3];
     bme280_calib_data _bme280_calib;
 };
 
