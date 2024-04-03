@@ -13,10 +13,10 @@
 #define AVERAGE 60 // number of samples to average over the sampling time
 #define SLEEP_TIME SAMPLE_TIME / AVERAGE
 
-int main()
+int start_measuring(__u8 bus)
 {
     // get main i2c bus object
-	I2C_BUS i2c_bus = I2C_BUS(0);
+    I2C_BUS i2c_bus = I2C_BUS(bus);
 
     // get oled display object
     SSD1306 display(&i2c_bus, 0x3C);
@@ -81,5 +81,29 @@ int main()
         dumper.dump(info.str());
     }
 
-	return 0;
+    return 0;
+}
+
+int main(int argc, char* argv[])
+{
+    if (argc < 2)
+    {
+        throw std::runtime_error("Please provide i2c bus number.");
+	return 1;
+    }
+		   
+    while (true)
+    {
+	try
+	{
+	    start_measuring(std::atoi(argv[1]));
+	}
+	catch (const std::runtime_error& e)
+	{
+	    // restart measuring after 10 seconds to try to fight error...
+            std::cout << std::string("Error occurred, restarting in 10 seconds. Error message:\n") + e.what() + std::string("\n");
+	    usleep(10000000);
+	}
+    }
+    return 0;
 }
