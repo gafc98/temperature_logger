@@ -2,6 +2,7 @@
 #include <fcntl.h>	/* For O_RDWR */
 #include <unistd.h> /* For open(), creat() */
 #include <sys/ioctl.h>
+#include <string.h>
 extern "C"
 {
 	#include <linux/i2c-dev.h>
@@ -41,14 +42,20 @@ public:
 	void write_to_device(__u8* buffer, T num_bytes)
 	{
 		if (write(file, buffer, num_bytes) != num_bytes)
-			throw std::runtime_error("Something went wrong when trying to write to device.");
+		{
+			std::string error = std::string("Writting ") + std::to_string(num_bytes) + std::string(" bytes to device ") + std::to_string(_device_address) + std::string(" failed!");
+			throw std::runtime_error(error);
+		}
 	}
 
 	template <typename T>
 	void read_from_device(__u8* buffer, T num_bytes)
 	{
 		if (read(file, buffer, num_bytes) != num_bytes)
-			throw std::runtime_error("Something went wrong when trying to read from device.");
+		{
+			std::string error = std::string("Reading ") + std::to_string(num_bytes) + std::string(" bytes from device ") + std::to_string(_device_address) + std::string(" failed!");
+			throw std::runtime_error(error);
+		}
 	}
 	
 	~I2C_BUS()
