@@ -107,7 +107,8 @@ int main(int argc, char* argv[])
 	    auto timenow = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
 	    std::ostringstream error_info;
 	    error_info << std::string(strtok(ctime(&timenow), "\n")) << " - " << e.what() << std::endl;
-
+	    error_dump.dump(error_info.str());
+	    
 	    usleep(10000000);
 	}
     }
