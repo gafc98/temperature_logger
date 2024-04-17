@@ -43,7 +43,7 @@ int start_measuring(__u8 bus)
         {
             auto t_start = std::chrono::high_resolution_clock::now();
 
-		    T_int = -66.875 + 218.75 * adc.read_voltage() / 3.3;
+	    T_int = -66.875 + 218.75 * adc.read_voltage() / 3.3;
             average_T_int += T_int;
             ret_code_sum += bme280.read_all(T, P, H);
             average_T += T;
@@ -102,6 +102,12 @@ int main(int argc, char* argv[])
 	{
 	    // restart measuring after 10 seconds to try to fight error...
             std::cout << std::string("Error occurred, restarting in 10 seconds. Error message:\n") + e.what() + std::string("\n");
+	    
+	    Dumper error_dump("error_logs.txt");
+	    auto timenow = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+	    std::ostringstream error_info;
+	    error_info << std::string(strtok(ctime(&timenow), "\n")) << " - " << e.what() << std::endl;
+
 	    usleep(10000000);
 	}
     }
