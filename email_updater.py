@@ -15,6 +15,7 @@ import matplotlib.pyplot as plt
 import matplotlib.dates
 import datetime
 from tabulate import tabulate
+import time
 
 # constants
 PORT = 587
@@ -63,7 +64,6 @@ class EmailSender:
                 self.valid_emails.add(email)
             else:
                 invalid_emails.add(email)
-
     
     def send_emails(self, date, message):
         msg = MIMEMultipart('alternative')
@@ -79,24 +79,20 @@ class EmailSender:
         msg.attach(MIMEText(message, 'html'))
         image = MIMEImage(img_data, name=os.path.basename("weather_report.png"))
 
-        #part = MIMEText('<img src="cid:image1">', 'html')
-        #msg.attach(part)
-
         image.add_header('Content-ID', '<image1>')
         msg.attach(image)
 
-        #msg.attach(part)
 
         with smtplib.SMTP(EMAIL_SERVER, PORT) as server:
             server.ehlo()
             server.starttls()
             server.ehlo()
             server.login(sender_email, sender_password)
-            server.sendmail(sender_email, receiver_email, msg.as_string())
+            server.sendmail(sender_email, list(self.valid_emails), msg.as_string())
 
 class DataProcessor:
-    def set_data(self,to_date):
-        to_date = datetime.datetime.strptime(to_date, DATE_FORMAT).replace(hour=0, minute=0, second=0)
+    def set_data(self, to_date):
+        to_date = to_date.replace(hour=0, minute=0, second=0)
         self.days = [to_date + datetime.timedelta(days=i-7) for i in range(8)]
         self.days_data = []
         for i in range(len(self.days) - 1):
@@ -129,7 +125,7 @@ class DataProcessor:
             ax[i, 0].xaxis.set_major_formatter(matplotlib.dates.DateFormatter('%H:%M'))
             ax[i, 0].set_xlabel(date)
             ax[i, 0].set_ylabel("T [°C]")
-            ax[i, 0].title.set_text('Temperature (digital sens.)')
+            ax[i, 0].title.set_text('Temperature')
             ax[i, 0].grid(which='both',axis='both')
 
             ax[i, 1].plot(time_stamp_list, H_list)
@@ -157,7 +153,7 @@ class DataProcessor:
 
     def produce_email_message(self):
         # produce table data
-        table_data = [{"T [°C]": round(average(day_data[1]), 2), "H [%]": round(average(day_data[2]), 1), "P [bar]": round(average(day_data[2]), 3)} for day_data in self.days_data]
+        table_data = [{"Temperature [°C]": round(average(day_data[1]), 2), "Humidity [%]": round(average(day_data[2]), 1), "Pressure [bar]": round(average(day_data[3]), 3)} for day_data in self.days_data]
         # Custom serial numbers
         table_days = [day.strftime("%a, %d-%m-%Y") for day in self.days[0:-1]]
         table = tabulate(table_data, headers="keys", showindex=table_days, tablefmt="html")
@@ -170,27 +166,32 @@ class DataProcessor:
 	    {table}
         <p><br></p>
         <p>See you next week!</p>
-        <p><span style="font-size: 10px;">Don&apos;t want to receive these emails anymore? you can unsubscribe <a href="{UNSUBSCRIBE_LINK}" target="_blank" rel="noopener noreferrer">here</a>.</span></p>
+        <p><span style="font-size: 10px;">Don&apos;t want to receive these emails anymore? you can unsubscribe <a href="{unsubscribe_link}" target="_blank" rel="noopener noreferrer">here</a>.</span></p>
 <img src="cid:image1">
         """
 
-def get_logs(from_date):
-    logs_list = logs_to_list(from_date)
-    print(logs_list)
-
-if __name__ == '__main__':
+def send_the_emails(date):
     es = EmailSender()
     es.set_data_frame(sheet_id)
     es.set_valid_emails()
-    
+
     dp = DataProcessor()
-    now = datetime.datetime.now()
-    from_date = (now - datetime.timedelta(days=1)).strftime(DATE_FORMAT)
-    dp.set_data(from_date)
-    
+    dp.set_data(date)
+
     dp.produce_weather_report()
     es.send_emails(dp.days[0], dp.produce_email_message())
 
-    #es.send_emails()
+def next_weekday(d, weekday):
+    days_ahead = weekday - d.weekday()
+    if days_ahead <= 0: # Target day already happened this week
+        days_ahead += 7
+    return d + datetime.timedelta(days_ahead)
 
+if __name__ == '__main__':
+    while True:
+        now = datetime.datetime.now()
+        #send_the_emails(now)
+        future_email_date = next_weekday(now, 0).replace(hour=2, minute=0)
+        time.sleep((future_email_date - now).total_seconds())
+        send_the_emails(future_email_date)
 
