@@ -1,3 +1,6 @@
 log.txt
 logger
 error_logs.txt
+.env
+__pycache__
+weather_report.png
