@@ -16,6 +16,7 @@ import matplotlib.dates
 import datetime
 from tabulate import tabulate
 import time
+from io import BytesIO
 
 # constants
 PORT = 587
@@ -64,23 +65,17 @@ class EmailSender:
             else:
                 invalid_emails.add(email)
     
-    def send_emails(self, date, message):
+    def send_emails(self, date, message, weather_report_image):
         msg = MIMEMultipart('alternative')
 
         msg["Subject"] = f"Eindhoven Weather Report - Week {date.strftime('%V')} of {date.strftime('%Y')}"
         msg["From"] = formataddr(("Weekly Reports", f"{sender_email}"))
-        #msg["To"] = ""
-        #msg["BCC"] = ", ".join(list(self.valid_emails))
-
-        with open('weather_report.png', 'rb') as f:
-            img_data = f.read()
 
         msg.attach(MIMEText(message, 'html'))
-        image = MIMEImage(img_data, name=os.path.basename("weather_report.png"))
-
+        weather_report_image.seek(0) # resets stream to beginning
+        image = MIMEImage(weather_report_image.read(), name=os.path.basename("weather_report.png"))
         image.add_header('Content-ID', '<image1>')
         msg.attach(image)
-
 
         with smtplib.SMTP(EMAIL_SERVER, PORT) as server:
             server.ehlo()
@@ -148,7 +143,11 @@ class DataProcessor:
             #ax[i, 3].title.set_text('Temperature (analog sens.)')
             #ax[i, 3].grid(which='both',axis='both')
 
-        fig.savefig('weather_report.png', dpi=fig.get_dpi()*0.6, bbox_inches = 'tight')
+
+
+        self.image_buffer = BytesIO() # this will save the fig to the RAM instead of the hard disk
+        fig.savefig(self.image_buffer, format='png', dpi=fig.get_dpi()*0.6, bbox_inches = 'tight')
+        plt.close()
 
     def produce_email_message(self):
         # produce table data
@@ -178,7 +177,7 @@ def send_the_emails(date):
     dp.set_data(date)
 
     dp.produce_weather_report()
-    es.send_emails(dp.days[0], dp.produce_email_message())
+    es.send_emails(dp.days[0], dp.produce_email_message(), dp.image_buffer)
 
 def next_weekday(d, weekday):
     days_ahead = weekday - d.weekday()
@@ -187,9 +186,11 @@ def next_weekday(d, weekday):
     return d + datetime.timedelta(days_ahead)
 
 if __name__ == '__main__':
+    if len(sys.argv) > 1 and sys.argv{1} == 'now':
+        # forces emails to be sent now for testing purposes
+        send_the_emails(datetime.datetime.now())
     while True:
         now = datetime.datetime.now()
-        #send_the_emails(now)
         future_email_date = next_weekday(now, 0).replace(hour=2, minute=0)
         time.sleep((future_email_date - now).total_seconds())
         send_the_emails(future_email_date)
