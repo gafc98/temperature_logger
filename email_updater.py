@@ -186,7 +186,7 @@ def next_weekday(d, weekday):
     return d + datetime.timedelta(days_ahead)
 
 if __name__ == '__main__':
-    if len(sys.argv) > 1 and sys.argv{1} == 'now':
+    if len(sys.argv) > 1 and sys.argv[1] == 'now':
         # forces emails to be sent now for testing purposes
         send_the_emails(datetime.datetime.now())
     while True:
