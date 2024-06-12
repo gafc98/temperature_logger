@@ -29,7 +29,6 @@ load_dotenv(envars)
 
 # Read environment variables
 sender_email = os.getenv("SENDER_EMAIL")
-receiver_email = os.getenv("RECEIVER_EMAIL")
 sender_password = os.getenv("PASSWORD")
 sheet_id = os.getenv("SHEET_ID")
 unsubscribe_link = os.getenv("UNSUBSCRIBE_LINK")
