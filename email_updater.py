@@ -168,7 +168,7 @@ class DataProcessor:
 <img src="cid:image1">
         """
 
-def send_the_emails(date):
+def send_the_emails(date, simulate=False):
     es = EmailSender()
     es.set_data_frame(sheet_id)
     es.set_valid_emails()
@@ -177,6 +177,10 @@ def send_the_emails(date):
     dp.set_data(date)
 
     dp.produce_weather_report()
+    if simulate:
+        es.valid_emails.clear()
+        es.valid_emails.add(os.getenv("RECEIVER_EMAIL"))
+        print(f"Simulation email sent to: {es.valid_emails}")
     es.send_emails(dp.days[0], dp.produce_email_message(), dp.image_buffer)
 
 def next_weekday(d, weekday):
@@ -188,7 +192,7 @@ def next_weekday(d, weekday):
 if __name__ == '__main__':
     if len(sys.argv) > 1 and sys.argv[1] == 'now':
         # forces emails to be sent now for testing purposes
-        send_the_emails(datetime.datetime.now())
+        send_the_emails(datetime.datetime.now(), simulate=True)
     while True:
         now = datetime.datetime.now()
         future_email_date = next_weekday(now, 0).replace(hour=2, minute=0)
