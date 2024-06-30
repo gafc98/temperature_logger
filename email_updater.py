@@ -40,8 +40,11 @@ def is_valid_email(email):
     regex = r'[^@]+@[^@]+\.[^@]+'
     return True if fullmatch(regex, email) else False
 
-def average(lst): 
-    return sum(lst) / len(lst) 
+def average(lst):
+    length = len(lst)
+    if length == 0:
+        return float("NaN")
+    return sum(lst) / length 
 
 class EmailSender:
     def __init__(self):
