@@ -16,12 +16,34 @@ class SSD1306
 {
 public:
     SSD1306(I2C_BUS* i2c_bus, __u16 device_address = 0x3C)
-	{
-		_i2c_bus = i2c_bus;
-		_device_address = device_address;
-        memset(_chars_in_line, 128 / font8x8[0], 8); // 1st time assumes all lines are full
-		set_config();
-	}
+    {
+	_i2c_bus = i2c_bus;
+	_device_address = device_address;
+       	memset(_chars_in_line, 128 / font8x8[0], 8); // 1st time assumes all lines are full
+    }
+
+    void set_config()
+    {
+        // first set device address to ensure correct communication
+        _i2c_bus->set_device_address(_device_address);
+        // turn on display
+        std::cout << "SSD1306: turning on display\n";
+        write8(COMMAND_REG, ON_CMD);
+        // set normal display mode
+        std::cout << "SSD1306: setting normal display display\n";
+        write8(COMMAND_REG, NORMAL_DISPLAY_CMD);
+        // set page adressing mode
+        std::cout << "SSD1306: setting page adressing mode\n";
+        write8(COMMAND_REG, 0x20);
+        write8(COMMAND_REG, PAGE_ADDRESSING_MODE);
+        // charge pump
+        std::cout << "SSD1306: charging pump\n";
+        write8(COMMAND_REG, 0x8d);
+        write8(COMMAND_REG, 0x14);
+
+        clear_display();
+        std::cout << "SSD1306: setup complete!\n";
+    }
 
     void set_cursor(__u8 x, __u8 y)
     {
@@ -117,31 +139,8 @@ private:
         _i2c_bus->write_to_device(buffer, N);
     }
 
-    void set_config()
-    {
-        // first set device address to ensure correct communication
-        _i2c_bus->set_device_address(_device_address);
-        // turn on display
-        std::cout << "SSD1306: turning on display\n";
-        write8(COMMAND_REG, ON_CMD);
-        // set normal display mode
-        std::cout << "SSD1306: setting normal display display\n";
-        write8(COMMAND_REG, NORMAL_DISPLAY_CMD);
-        // set page adressing mode
-        std::cout << "SSD1306: setting page adressing mode\n";
-        write8(COMMAND_REG, 0x20);
-        write8(COMMAND_REG, PAGE_ADDRESSING_MODE);
-        // charge pump
-        std::cout << "SSD1306: charging pump\n";
-        write8(COMMAND_REG, 0x8d);
-        write8(COMMAND_REG, 0x14);
-
-        clear_display();
-        std::cout << "SSD1306: setup complete!\n";
-    }
-
-	__u16 _device_address;
-	I2C_BUS* _i2c_bus;
+    __u16 _device_address;
+    I2C_BUS* _i2c_bus;
     __u8 _chars_in_line[8];
     __u8 _current_page;
 };
