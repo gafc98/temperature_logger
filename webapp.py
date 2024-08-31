@@ -115,7 +115,7 @@ app.layout = dbc.Container([
                         dbc.Col(html.H1("Weather Dashboard", className="text-center"), width=12),
                     ]),
                     dbc.Row([
-                        dbc.Col(html.H2("The best interactive weather dashboard shows you weather data from the past 24 hours! Message to the world: PEDRO IS SUPER MEGA GAY."))
+                        dbc.Col(html.H2("The best dashboard shows you weather data from the past 24 hours!", className="text-center"), width=12)
                     ]),
                     dbc.Row([
                         dbc.Col(dcc.Loading(id='loading-output', children=dcc.Graph(id='3d-scatter-graph')), width=12)
