@@ -15,17 +15,17 @@ app = dash.Dash(__name__, external_stylesheets=[dbc.themes.QUARTZ])
      dash.Output('humidity-graph', 'figure'),
      dash.Output('pressure-graph', 'figure'),
      dash.Output('analog-temperature-graph', 'figure')],
-    [dash.Input('temperature-graph', 'figure')]
+    [dash.Input('slider', 'value')]
 )
-def update_figures(id):
-    time_stamp_list, T_list, H_list, P_list, Tint_list = get_latest_log_data()
+def update_figures(slider_value):
+    time_stamp_list, T_list, H_list, P_list, Tint_list = get_latest_log_data(days_before=slider_value)
     threed_fig = go.Figure(data=[go.Scatter3d(
         x=T_list,
         y=H_list,
         z=P_list,
         mode='markers',
         marker=dict(
-            color=P_list,  # Use pressure for color
+            color=[t.timestamp() for t in time_stamp_list],
             colorscale='Viridis',  # Choose a color scale
             opacity=0.8
         )
@@ -33,8 +33,13 @@ def update_figures(id):
     temperature_fig = go.Figure(data=[go.Scatter(x=time_stamp_list, y=T_list, mode='lines+markers')])
     humidity_fig = go.Figure(data=[go.Scatter(x=time_stamp_list, y=H_list, mode='lines+markers')])
     pressure_fig = go.Figure(data=[go.Scatter(x=time_stamp_list, y=P_list, mode='lines+markers')])
-    analog_temperature_fig = go.Figure(data=[go.Scatter(x=time_stamp_list, y=Tint_list, mode='lines+markers')])
+    analog_temperature_fig = go.Figure(data=[go.Scatter(x=time_stamp_list, y=Tint_list, mode='markers+text')])
+    
     # Customize the plot appearance
+    tick_format = '%H:%M'
+    if slider_value > 1:
+        tick_format = '%d/%m ' + tick_format
+
     threed_fig.update_layout(
         paper_bgcolor='rgba(0,0,0,0.2)',
         plot_bgcolor='rgba(0, 0, 0, 0.2)',
@@ -43,7 +48,11 @@ def update_figures(id):
         scene=dict(
             xaxis_title='Temperature [°C]',
             yaxis_title='Humidity [%]',
-            zaxis_title='Pressure [bar]'
+            zaxis_title='Pressure [bar]',
+            annotations=[
+                {'x': T_list[0], 'y': H_list[0], 'z': P_list[0], 'text': time_stamp_list[0].strftime('%d/%m %H:%M')},
+                {'x': T_list[-1], 'y': H_list[-1], 'z': P_list[-1], 'text': time_stamp_list[-1].strftime('%d/%m %H:%M')}
+            ]
         ),
         height=800
     )
@@ -53,7 +62,7 @@ def update_figures(id):
         title="Temperature",
         xaxis_title="Time",
         yaxis_title="Temperature [°C]",
-        xaxis_tickformat="%H:%M",  # Format time axis as HH:MM
+        xaxis_tickformat=tick_format,  # Format time axis as HH:MM
         template="plotly_dark",  # Choose a dark theme for better contrast
     )
     humidity_fig.update_layout(
@@ -62,7 +71,7 @@ def update_figures(id):
         title="Relative Humidity",
         xaxis_title="Time",
         yaxis_title="Humidity [%]",
-        xaxis_tickformat="%H:%M",  # Format time axis as HH:MM
+        xaxis_tickformat=tick_format,  # Format time axis as HH:MM
         template="plotly_dark",  # Choose a dark theme for better contrast
     )
     pressure_fig.update_layout(
@@ -71,7 +80,7 @@ def update_figures(id):
         title="Atmospheric Presssure",
         xaxis_title="Time",
         yaxis_title="Pressure [bar]",
-        xaxis_tickformat="%H:%M",  # Format time axis as HH:MM
+        xaxis_tickformat=tick_format,  # Format time axis as HH:MM
         template="plotly_dark",  # Choose a dark theme for better contrast
     )
     analog_temperature_fig.update_layout(
@@ -80,16 +89,16 @@ def update_figures(id):
         title="Old Analog Temperature Sensor (deprecated)",
         xaxis_title="Time",
         yaxis_title="Temperature [°C]",
-        xaxis_tickformat="%H:%M",  # Format time axis as HH:MM
+        xaxis_tickformat=tick_format,  # Format time axis as HH:MM
         template="plotly_dark",  # Choose a dark theme for better contrast
     )
     
     return threed_fig, temperature_fig, humidity_fig, pressure_fig, analog_temperature_fig
 
 
-def get_latest_log_data():
+def get_latest_log_data(days_before = 1):
     to_date = datetime.datetime.now()
-    from_date = to_date - datetime.timedelta(days = 1) # checks for last 24 hours
+    from_date = to_date - datetime.timedelta(days = days_before) # checks for last 24 hours
     logs_list = logs_to_list(from_date, to_date)
     time_stamp_list = []
     T_list = []
@@ -104,6 +113,8 @@ def get_latest_log_data():
         P_list.append(float(P))
         Tint_list.append(float(Tint))
 
+    print(f'Webpage refreshed at {to_date}.')
+
     return time_stamp_list, T_list, H_list, P_list, Tint_list
 
 app.layout = dbc.Container([
@@ -115,7 +126,36 @@ app.layout = dbc.Container([
                         dbc.Col(html.H1("Weather Dashboard", className="text-center"), width=12),
                     ]),
                     dbc.Row([
-                        dbc.Col(html.H2("The best dashboard shows you weather data from the past 24 hours!", className="text-center"), width=12)
+                        dbc.Col(html.H2("The best dashboard shows you weather data up to the past 7 days!", className="text-center"), width=12)
+                    ]),
+                    dbc.Row([
+                        dbc.Col(
+                            html.Div(
+                                [
+                                    'Like what you see? Check out the ',
+                                    html.A(
+                                        'source code.', href='https://github.com/gafc98/temperature_logger', target='_blank', style={'fontSize': '12px', 'color': '#dbdbdb'}
+                                    )
+                                ],
+                                style={'display': 'inline-block', 'fontSize': '12px'}
+                            ),
+                            width=12,
+                            style={'text-align': 'center', 'margin-bottom': '20px'}
+                        )
+                    ]),
+                    dbc.Row([
+                        dbc.Col(
+                            dcc.Slider(
+                                id='slider',
+                                min=1,
+                                max=7,
+                                value=1,
+                                step=None,
+                                marks={i: {'label': f'{i} days', 'style': {'color': 'white', 'font-family': 'Arial', 'white-space': 'nowrap'}} for i in range(1,8)}
+                            ),
+                            width=12,
+                            style={'text-align': 'center', 'margin-bottom': '20px'}
+                        )
                     ]),
                     dbc.Row([
                         dbc.Col(dcc.Loading(id='loading-output', children=dcc.Graph(id='3d-scatter-graph')), width=12)
