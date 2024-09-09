@@ -158,19 +158,19 @@ app.layout = dbc.Container([
                         )
                     ]),
                     dbc.Row([
-                        dbc.Col(dcc.Loading(id='loading-output', children=dcc.Graph(id='3d-scatter-graph')), width=12)
+                        dbc.Col(dcc.Loading(id='loading-output1', children=dcc.Graph(id='3d-scatter-graph')), width=12)
                     ]),
                     dbc.Row([
-                        dbc.Col(dcc.Loading(id='loading-output', children=dcc.Graph(id='temperature-graph')), width=12)
+                        dbc.Col(dcc.Loading(id='loading-output2', children=dcc.Graph(id='temperature-graph')), width=12)
                     ]),
                     dbc.Row([
-                        dbc.Col(dcc.Loading(id='loading-output', children=dcc.Graph(id='humidity-graph')), width=12)
+                        dbc.Col(dcc.Loading(id='loading-output3', children=dcc.Graph(id='humidity-graph')), width=12)
                     ]),
                     dbc.Row([
-                        dbc.Col(dcc.Loading(id='loading-output', children=dcc.Graph(id='pressure-graph')), width=12)
+                        dbc.Col(dcc.Loading(id='loading-output4', children=dcc.Graph(id='pressure-graph')), width=12)
                     ]),
                     dbc.Row([
-                        dbc.Col(dcc.Loading(id='loading-output', children=dcc.Graph(id='analog-temperature-graph')), width=12)
+                        dbc.Col(dcc.Loading(id='loading-output5', children=dcc.Graph(id='analog-temperature-graph')), width=12)
                     ])
                 ]),
                 className="border rounded"
