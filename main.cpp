@@ -124,7 +124,8 @@ int main(int argc, char* argv[])
 	catch (const std::runtime_error& e)
 	{
 	    // restart measuring after 10 seconds to try to fight error...
-            std::cout << std::string("Error occurred, restarting in 10 seconds. Error message:\n") + e.what() + std::string("\n");
+	    if (log_to_display)
+            	std::cout << std::string("Error occurred, restarting in 10 seconds. Error message:\n") + e.what() + std::string("\n");
 	    
 	    Dumper error_dump("error_logs.txt");
 	    auto timenow = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
