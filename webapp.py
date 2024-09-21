@@ -1,13 +1,15 @@
 import dash
 from dash import dcc, html
 import plotly.graph_objects as go
-from print_logs import logs_to_list
+from include.print_logs import logs_to_list
 import dash_bootstrap_components as dbc
 import datetime
+import os
 
 DATE_FORMAT = "%a %b %d %H:%M:%S %Y"
 
 app = dash.Dash(__name__, external_stylesheets=[dbc.themes.QUARTZ])
+app.title = 'The Weather Dash'
 
 @app.callback(
     [dash.Output('3d-scatter-graph', 'figure'),
@@ -181,4 +183,4 @@ app.layout = dbc.Container([
 
 
 if __name__ == '__main__':
-    app.run_server(debug=True)
+    app.run_server(debug=bool(os.getenv('WEBAPP_DEBUG', False)))

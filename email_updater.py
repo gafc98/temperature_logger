@@ -10,7 +10,7 @@ import sys
 import pandas as pd
 from re import fullmatch
 from dotenv import load_dotenv # pip install python-dotenv
-from print_logs import logs_to_list
+from include.print_logs import logs_to_list
 import matplotlib.pyplot as plt
 import matplotlib.dates
 import datetime
