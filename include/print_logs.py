@@ -3,7 +3,7 @@ import datetime
 from file_read_backwards import FileReadBackwards # can be installed via pip, also ew, camel case
 
 DATE_FORMAT = "%a %b %d %H:%M:%S %Y"
-LOG_FILE_NAME = "log.txt"
+LOG_FILE_NAME = "../log.txt"
 
 def print_logs(from_date):
     ref_date = datetime.datetime.strptime(from_date, DATE_FORMAT)
