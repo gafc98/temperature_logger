@@ -1,8 +1,5 @@
 #!/bin/bash
 
-screen -X -S temperature_logger quit
-screen -X -S email_updater quit
-screen -X -S webapp quit
-screen -wipe
+tmux kill-ses -t temperature_logger
 
 echo "Temperature logger services killed."

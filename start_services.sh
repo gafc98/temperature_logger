@@ -2,12 +2,16 @@
 
 read -s -p "Enter password: " password
 
-screen -dmS temperature_logger sudo ./logger
-sleep 1
-screen -S temperature_logger -p 0 -X stuff "$password^M"
+tmux new-session -d -s temperature_logger 
 
-screen -dmS email_updater python email_updater.py
-screen -dmS webapp python webapp.py
+tmux split-window -t temperature_logger
+tmux split-window -h -t temperature_logger
+
+tmux send-keys -t temperature_logger.1 "sudo ./logger -i2c_bus 2" ENTER
+tmux send-keys -t temperature_logger.1 "$password" ENTER
+tmux send-keys -t temperature_logger.0 "python webapp.py" ENTER
+tmux send-keys -t temperature_logger.2 "python email_updater.py" ENTER
+
 
 echo "Temperature logging services started in the background."
-screen -ls
+tmux list-sessions

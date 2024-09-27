@@ -3,11 +3,11 @@ import datetime
 from file_read_backwards import FileReadBackwards # can be installed via pip, also ew, camel case
 
 DATE_FORMAT = "%a %b %d %H:%M:%S %Y"
-LOG_FILE_NAME = "../log.txt"
+LOG_FILE_NAME = "log.txt"
 
-def print_logs(from_date):
+def print_logs(from_date, path=LOG_FILE_NAME):
     ref_date = datetime.datetime.strptime(from_date, DATE_FORMAT)
-    with FileReadBackwards(LOG_FILE_NAME) as log_file:
+    with FileReadBackwards(path) as log_file:
         for line in log_file:
             line_date = datetime.datetime.strptime(line.split("\t")[0], DATE_FORMAT)
             if line_date > ref_date:
@@ -15,9 +15,9 @@ def print_logs(from_date):
             else:
                 return
 
-def logs_to_list(from_date, to_date):
+def logs_to_list(from_date, to_date, path=LOG_FILE_NAME):
     lines_list = []
-    with FileReadBackwards(LOG_FILE_NAME) as log_file:
+    with FileReadBackwards(path) as log_file:
         for line in log_file:
             line_date = datetime.datetime.strptime(line.split("\t")[0], DATE_FORMAT)
             if line_date < from_date:
