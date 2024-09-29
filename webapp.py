@@ -5,12 +5,20 @@ from include.print_logs import logs_to_list
 import dash_bootstrap_components as dbc
 import datetime
 import os
+from dotenv import load_dotenv # pip install python-dotenv
+from pathlib import Path
 
 DATE_FORMAT = "%a %b %d %H:%M:%S %Y"
-MARKS_TO_DAYS = (1, 2, 3, 4, 5, 6, 7, 14, 28) # converts from slider mark idx to respective days
+MARKS_TO_DAYS = (1, 2, 3, 4, 5, 6, 7, 14, 28, 56) # converts from slider mark idx to respective days
 
 app = dash.Dash(__name__, external_stylesheets=[dbc.themes.QUARTZ])
 app.title = 'The Weather Dash'
+
+# load .env variables
+curr_dir = Path(__file__).resolve().parent if "__file__" in locals() else Path.cwd()
+envars = curr_dir / ".env"
+load_dotenv(envars)
+NEWSLETTER_LINK = os.getenv("UNSUBSCRIBE_LINK")
 
 @app.callback(
     [dash.Output('3d-scatter-graph', 'figure'),
@@ -129,7 +137,7 @@ app.layout = dbc.Container([
                         dbc.Col(html.H1("Weather Dashboard", className="text-center"), width=12),
                     ]),
                     dbc.Row([
-                        dbc.Col(html.H2("The best dashboard shows you weather data up to the past 7 days!", className="text-center"), width=12)
+                        dbc.Col(html.H2(f"The best dashboard shows you weather data up to the past {MARKS_TO_DAYS[-1]} days!", className="text-center"), width=12)
                     ]),
                     dbc.Row([
                         dbc.Col(
@@ -137,8 +145,13 @@ app.layout = dbc.Container([
                                 [
                                     'Like what you see? Check out the ',
                                     html.A(
-                                        'source code.', href='https://github.com/gafc98/temperature_logger', target='_blank', style={'fontSize': '12px', 'color': '#dbdbdb'}
-                                    )
+                                        'source code', href='https://github.com/gafc98/temperature_logger', target='_blank', style={'fontSize': '12px', 'color': '#dbdbdb'}
+                                    ),
+                                    '. Would you like to receive a weekly newsletter? Check out this ',
+                                    html.A(
+                                        'form', href=NEWSLETTER_LINK, target='_blank', style={'fontSize': '12px', 'color': '#dbdbdb'}
+                                    ),
+                                    '.'
                                 ],
                                 style={'display': 'inline-block', 'fontSize': '12px'}
                             ),
