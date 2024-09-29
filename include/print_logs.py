@@ -15,16 +15,17 @@ def print_logs(from_date, path=LOG_FILE_NAME):
             else:
                 return
 
-def logs_to_list(from_date, to_date, path=LOG_FILE_NAME):
+def logs_to_list(from_date, to_date, path=LOG_FILE_NAME, subsample=1):
     lines_list = []
     with FileReadBackwards(path) as log_file:
-        for line in log_file:
+        for i, line in enumerate(log_file):
+            if (i % subsample != 0):
+                continue
             line_date = datetime.datetime.strptime(line.split("\t")[0], DATE_FORMAT)
             if line_date < from_date:
-                break
+                return lines_list
             if line_date < to_date:
                 lines_list.append(line)
-    return lines_list
 
 if __name__ == '__main__':
     print_logs(sys.argv[1])

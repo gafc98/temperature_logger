@@ -7,6 +7,7 @@ import datetime
 import os
 
 DATE_FORMAT = "%a %b %d %H:%M:%S %Y"
+MARKS_TO_DAYS = (1, 2, 3, 4, 5, 6, 7, 14, 28) # converts from slider mark idx to respective days
 
 app = dash.Dash(__name__, external_stylesheets=[dbc.themes.QUARTZ])
 app.title = 'The Weather Dash'
@@ -20,7 +21,7 @@ app.title = 'The Weather Dash'
     [dash.Input('slider', 'value')]
 )
 def update_figures(slider_value):
-    time_stamp_list, T_list, H_list, P_list, Tint_list = get_latest_log_data(days_before=slider_value)
+    time_stamp_list, T_list, H_list, P_list, Tint_list = get_latest_log_data(days_before=MARKS_TO_DAYS[slider_value])
     threed_fig = go.Figure(data=[go.Scatter3d(
         x=T_list,
         y=H_list,
@@ -100,8 +101,8 @@ def update_figures(slider_value):
 
 def get_latest_log_data(days_before = 1):
     to_date = datetime.datetime.now()
-    from_date = to_date - datetime.timedelta(days = days_before) # checks for last 24 hours
-    logs_list = logs_to_list(from_date, to_date)
+    from_date = to_date - datetime.timedelta(days = days_before) # checks for last N days
+    logs_list = logs_to_list(from_date, to_date, subsample=days_before)
     time_stamp_list = []
     T_list = []
     H_list = []
@@ -149,11 +150,11 @@ app.layout = dbc.Container([
                         dbc.Col(
                             dcc.Slider(
                                 id='slider',
-                                min=1,
-                                max=7,
-                                value=1,
+                                min=0,
+                                max=len(MARKS_TO_DAYS)-1,
+                                value=0,
                                 step=None,
-                                marks={i: {'label': f'{i} days', 'style': {'color': 'white', 'font-family': 'Arial', 'white-space': 'nowrap'}} for i in range(1,8)}
+                                marks={i: {'label': f'{MARKS_TO_DAYS[i]} days', 'style': {'color': 'white', 'font-family': 'Arial', 'white-space': 'nowrap'}} for i in range(len(MARKS_TO_DAYS))}
                             ),
                             width=12,
                             style={'text-align': 'center', 'margin-bottom': '20px'}
