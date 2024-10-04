@@ -18,7 +18,7 @@ app.title = 'The Weather Dash'
 curr_dir = Path(__file__).resolve().parent if "__file__" in locals() else Path.cwd()
 envars = curr_dir / ".env"
 load_dotenv(envars)
-NEWSLETTER_LINK = os.getenv("UNSUBSCRIBE_LINK")
+NEWSLETTER_LINK = os.getenv("FORM_LINK")
 
 @app.callback(
     [dash.Output('3d-scatter-graph', 'figure'),
@@ -197,4 +197,4 @@ app.layout = dbc.Container([
 
 
 if __name__ == '__main__':
-    app.run_server(debug=bool(os.getenv('WEBAPP_DEBUG', False)))
+    app.run_server(debug=os.getenv('WEBAPP_DEBUG', False)=='true')

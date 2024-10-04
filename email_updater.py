@@ -32,7 +32,7 @@ load_dotenv(envars)
 sender_email = os.getenv("SENDER_EMAIL")
 sender_password = os.getenv("PASSWORD")
 sheet_id = os.getenv("SHEET_ID")
-unsubscribe_link = os.getenv("UNSUBSCRIBE_LINK")
+FORM_LINK = os.getenv("FORM_LINK")
 
 # function and class definitions
 def is_valid_email(email):
@@ -168,7 +168,7 @@ class DataProcessor:
 	    {table}
         <p><br></p>
         <p>See you next week!</p>
-        <p><span style="font-size: 10px;">Don&apos;t want to receive these emails anymore? you can unsubscribe <a href="{unsubscribe_link}" target="_blank" rel="noopener noreferrer">here</a>.</span></p>
+        <p><span style="font-size: 10px;">Don&apos;t want to receive these emails anymore? you can unsubscribe <a href="{FORM_LINK}" target="_blank" rel="noopener noreferrer">here</a>.</span></p>
 <img src="cid:image1">
         """
 
