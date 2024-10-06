@@ -7,6 +7,7 @@ import datetime
 import os
 from dotenv import load_dotenv # pip install python-dotenv
 from pathlib import Path
+import math
 
 DATE_FORMAT = "%a %b %d %H:%M:%S %Y"
 MARKS_TO_DAYS = (1, 2, 3, 4, 5, 6, 7, 14, 28, 56) # converts from slider mark idx to respective days
@@ -25,11 +26,14 @@ NEWSLETTER_LINK = os.getenv("FORM_LINK")
      dash.Output('temperature-graph', 'figure'),
      dash.Output('humidity-graph', 'figure'),
      dash.Output('pressure-graph', 'figure'),
+     dash.Output('specific-humidity-graph', 'figure'),
      dash.Output('analog-temperature-graph', 'figure')],
     [dash.Input('slider', 'value')]
 )
 def update_figures(slider_value):
     time_stamp_list, T_list, H_list, P_list, Tint_list = get_latest_log_data(days_before=MARKS_TO_DAYS[slider_value])
+    specific_humidity_list = compute_specific_humidity(T_list, H_list, P_list)
+
     threed_fig = go.Figure(data=[go.Scatter3d(
         x=T_list,
         y=H_list,
@@ -44,6 +48,7 @@ def update_figures(slider_value):
     temperature_fig = go.Figure(data=[go.Scatter(x=time_stamp_list, y=T_list, mode='lines+markers')])
     humidity_fig = go.Figure(data=[go.Scatter(x=time_stamp_list, y=H_list, mode='lines+markers')])
     pressure_fig = go.Figure(data=[go.Scatter(x=time_stamp_list, y=P_list, mode='lines+markers')])
+    specific_humidity_fig = go.Figure(data=[go.Scatter(x=time_stamp_list, y=specific_humidity_list, mode='lines+markers')])
     analog_temperature_fig = go.Figure(data=[go.Scatter(x=time_stamp_list, y=Tint_list, mode='markers+text')])
     
     # Customize the plot appearance
@@ -94,6 +99,15 @@ def update_figures(slider_value):
         xaxis_tickformat=tick_format,  # Format time axis as HH:MM
         template="plotly_dark",  # Choose a dark theme for better contrast
     )
+    specific_humidity_fig.update_layout(
+        paper_bgcolor='rgba(0,0,0,0.2)',
+        plot_bgcolor='rgba(0, 0, 0, 0.2)',
+        title="Specific Humidity",
+        xaxis_title="Time",
+        yaxis_title="S.H. [g/Kg]",
+        xaxis_tickformat=tick_format,  # Format time axis as HH:MM
+        template="plotly_dark",  # Choose a dark theme for better contrast
+    )
     analog_temperature_fig.update_layout(
         paper_bgcolor='rgba(0,0,0,0.2)',
         plot_bgcolor='rgba(0, 0, 0, 0.2)',
@@ -104,7 +118,7 @@ def update_figures(slider_value):
         template="plotly_dark",  # Choose a dark theme for better contrast
     )
     
-    return threed_fig, temperature_fig, humidity_fig, pressure_fig, analog_temperature_fig
+    return threed_fig, temperature_fig, humidity_fig, pressure_fig, specific_humidity_fig, analog_temperature_fig
 
 
 def get_latest_log_data(days_before = 1):
@@ -127,6 +141,17 @@ def get_latest_log_data(days_before = 1):
     print(f'Webpage refreshed at {to_date}.')
 
     return time_stamp_list, T_list, H_list, P_list, Tint_list
+
+def compute_specific_humidity(T_list, H_list, P_list):
+    # T_list in degC
+    # H_list in percentage
+    # P_list in bar
+    specific_humidity_list = []
+    for i in range(len(T_list)):
+        saturation_press = 0.0061078 * math.exp((17.27 * T_list[i]) / (T_list[i] + 237.3)) # bar
+        vapor_press = H_list[i] / 100 * saturation_press
+        specific_humidity_list.append(1000 * vapor_press / (1.6078 * P_list[i] - 0.6078 * vapor_press))
+    return specific_humidity_list # g H2O per Kg of humid air
 
 app.layout = dbc.Container([
     dbc.Row([
@@ -186,7 +211,10 @@ app.layout = dbc.Container([
                         dbc.Col(dcc.Loading(id='loading-output4', children=dcc.Graph(id='pressure-graph')), width=12)
                     ]),
                     dbc.Row([
-                        dbc.Col(dcc.Loading(id='loading-output5', children=dcc.Graph(id='analog-temperature-graph')), width=12)
+                        dbc.Col(dcc.Loading(id='loading-output5', children=dcc.Graph(id='specific-humidity-graph')), width=12)
+                    ]),
+                    dbc.Row([
+                        dbc.Col(dcc.Loading(id='loading-output6', children=dcc.Graph(id='analog-temperature-graph')), width=12)
                     ])
                 ]),
                 className="border rounded"
