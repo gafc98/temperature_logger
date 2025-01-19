@@ -1,4 +1,5 @@
 import dash
+import dash_table
 from dash import dcc, html
 import plotly.graph_objects as go
 from include.print_logs import logs_to_list
@@ -27,11 +28,19 @@ NEWSLETTER_LINK = os.getenv("FORM_LINK")
      dash.Output('humidity-graph', 'figure'),
      dash.Output('pressure-graph', 'figure'),
      dash.Output('specific-humidity-graph', 'figure'),
-     dash.Output('analog-temperature-graph', 'figure')],
+     dash.Output('analog-temperature-graph', 'figure'),
+     dash.Output('info-data', 'data')],
     [dash.Input('slider', 'value')]
 )
 def update_figures(slider_value):
     time_stamp_list, T_list, H_list, P_list, Tint_list = get_latest_log_data(days_before=MARKS_TO_DAYS[slider_value])
+    
+    info_data = [
+            {'Parameter': 'Temperature', 'Latest Value': f'{T_list[0]:.2f} \u2103'},
+            {'Parameter': 'Humidity', 'Latest Value': f'{H_list[0]:.1f} %'},
+            {'Parameter': 'Pressure', 'Latest Value': f'{P_list[0]:.3f} bar'}
+        ]
+
     specific_humidity_list = compute_specific_humidity(T_list, H_list, P_list)
 
     threed_fig = go.Figure(data=[go.Scatter3d(
@@ -57,7 +66,7 @@ def update_figures(slider_value):
         tick_format = '%d/%m ' + tick_format
 
     threed_fig.update_layout(
-        paper_bgcolor='rgba(0,0,0,0.2)',
+        paper_bgcolor='rgba(0, 0, 0, 0.2)',
         plot_bgcolor='rgba(0, 0, 0, 0.2)',
         template='plotly_dark',
         title='Temperature, Humidity, and Pressure',
@@ -118,7 +127,7 @@ def update_figures(slider_value):
         template="plotly_dark",  # Choose a dark theme for better contrast
     )
     
-    return threed_fig, temperature_fig, humidity_fig, pressure_fig, specific_humidity_fig, analog_temperature_fig
+    return threed_fig, temperature_fig, humidity_fig, pressure_fig, specific_humidity_fig, analog_temperature_fig, info_data
 
 
 def get_latest_log_data(days_before = 1):
@@ -152,6 +161,7 @@ def compute_specific_humidity(T_list, H_list, P_list):
         vapor_press = H_list[i] / 100 * saturation_press
         specific_humidity_list.append(1000 * vapor_press / (1.6078 * P_list[i] - 0.6078 * vapor_press))
     return specific_humidity_list # g H2O per Kg of humid air
+
 
 app.layout = dbc.Container([
     dbc.Row([
@@ -197,6 +207,16 @@ app.layout = dbc.Container([
                             width=12,
                             style={'text-align': 'center', 'margin-bottom': '20px'}
                         )
+                    ]),
+                    dbc.Row([
+                        dash_table.DataTable(
+                            id='info-data',
+                            columns=[{'id': 'Parameter', 'name': 'Parameter'}, {'id': 'Latest Value', 'name': 'Latest Value'}],
+                            style_table={'minWidth': '300px'},
+                            style_cell={'textAlign': 'center', 'backgroundColor': 'rgba(0, 0, 0, 0.2)'},
+                            style_header={'backgroundColor': 'rgba(0, 0, 0, 0.4)', 'fontWeight': 'bold'}
+                        )
+                            
                     ]),
                     dbc.Row([
                         dbc.Col(dcc.Loading(id='loading-output1', children=dcc.Graph(id='3d-scatter-graph')), width=12)
