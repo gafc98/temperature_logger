@@ -97,18 +97,18 @@ class DataProcessor:
         
             logs_list = logs_to_list(self.days[i], self.days[i + 1])
             time_stamp_list = []
-            T_list = []
-            H_list = []
-            P_list = []
+            T_interior_list = []
+            H_interior_list = []
+            P_interior_list = []
             Tint_list = []
             for log in logs_list:
                 time_stamp, T, H, P, Tint, _ = log.split('\t')
                 time_stamp_list.append(datetime.datetime.strptime(time_stamp, DATE_FORMAT))
-                T_list.append(float(T))
-                H_list.append(float(H))
-                P_list.append(float(P))
+                T_interior_list.append(float(T))
+                H_interior_list.append(float(H))
+                P_interior_list.append(float(P))
                 Tint_list.append(float(Tint))
-            self.days_data.append((time_stamp_list, T_list, H_list, P_list, Tint_list))
+            self.days_data.append((time_stamp_list, T_interior_list, H_interior_list, P_interior_list, Tint_list))
 
     def produce_weather_report(self):
         fig, ax = plt.subplots(len(self.days_data), 3, figsize=(25, 40))
@@ -116,23 +116,23 @@ class DataProcessor:
 
         for i in range(len(self.days_data)):
             date = self.days[i].strftime("%a, %d-%m-%Y")
-            time_stamp_list, T_list, H_list, P_list, Tint_list = self.days_data[i]
+            time_stamp_list, T_interior_list, H_interior_list, P_interior_list, Tint_list = self.days_data[i]
 
-            ax[i, 0].plot(time_stamp_list, T_list)
+            ax[i, 0].plot(time_stamp_list, T_interior_list)
             ax[i, 0].xaxis.set_major_formatter(matplotlib.dates.DateFormatter('%H:%M'))
             ax[i, 0].set_xlabel(date)
             ax[i, 0].set_ylabel("T [°C]")
             ax[i, 0].title.set_text('Temperature')
             ax[i, 0].grid(which='both',axis='both')
 
-            ax[i, 1].plot(time_stamp_list, H_list)
+            ax[i, 1].plot(time_stamp_list, H_interior_list)
             ax[i, 1].xaxis.set_major_formatter(matplotlib.dates.DateFormatter('%H:%M'))
             ax[i, 1].set_xlabel(date)
             ax[i, 1].set_ylabel("H [%]")
             ax[i, 1].title.set_text('Relative Humidity')
             ax[i, 1].grid(which='both',axis='both')
 
-            ax[i, 2].plot(time_stamp_list, P_list)
+            ax[i, 2].plot(time_stamp_list, P_interior_list)
             ax[i, 2].xaxis.set_major_formatter(matplotlib.dates.DateFormatter('%H:%M'))
             ax[i, 2].set_xlabel(date)
             ax[i, 2].set_ylabel("P [bar]")

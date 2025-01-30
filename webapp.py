@@ -1,6 +1,5 @@
 import dash
-import dash_table
-from dash import dcc, html
+from dash import dcc, html, dash_table
 import plotly.graph_objects as go
 from include.print_logs import logs_to_list
 import dash_bootstrap_components as dbc
@@ -33,31 +32,53 @@ NEWSLETTER_LINK = os.getenv("FORM_LINK")
     [dash.Input('slider', 'value')]
 )
 def update_figures(slider_value):
-    time_stamp_list, T_list, H_list, P_list, Tint_list = get_latest_log_data(days_before=MARKS_TO_DAYS[slider_value])
+    time_stamp_list, T_interior_list, H_interior_list, P_interior_list, Tint_list, T_exterior_list, H_exterior_list, P_exterior_list = get_latest_log_data(days_before=MARKS_TO_DAYS[slider_value])
     
     info_data = [
-            {'Parameter': 'Temperature', 'Latest Value': f'{T_list[0]:.2f} \u2103'},
-            {'Parameter': 'Humidity', 'Latest Value': f'{H_list[0]:.1f} %'},
-            {'Parameter': 'Pressure', 'Latest Value': f'{P_list[0]:.3f} bar'}
-        ]
+        {'Latest Value': 'Temperature', 'Interior': f'{T_interior_list[0]:.2f} \u2103', 'Exterior': f'{T_exterior_list[0]:.2f} \u2103'},
+        {'Latest Value': 'Humidity', 'Interior': f'{H_interior_list[0]:.1f} %', 'Exterior': f'{H_exterior_list[0]:.1f} %'},
+        {'Latest Value': 'Pressure', 'Interior': f'{P_interior_list[0]:.3f} bar', 'Exterior': f'{P_exterior_list[0]:.3f} bar'}
+    ]
 
-    specific_humidity_list = compute_specific_humidity(T_list, H_list, P_list)
+    specific_humidity_interior_list = compute_specific_humidity(T_interior_list, H_interior_list, P_interior_list)
+    specific_humidity_exterior_list = compute_specific_humidity(T_exterior_list, H_exterior_list, P_exterior_list)
 
-    threed_fig = go.Figure(data=[go.Scatter3d(
-        x=T_list,
-        y=H_list,
-        z=P_list,
-        mode='markers',
-        marker=dict(
-            color=[t.timestamp() for t in time_stamp_list],
-            colorscale='Viridis',  # Choose a color scale
-            opacity=0.8
-        )
-    )])
-    temperature_fig = go.Figure(data=[go.Scatter(x=time_stamp_list, y=T_list, mode='lines+markers')])
-    humidity_fig = go.Figure(data=[go.Scatter(x=time_stamp_list, y=H_list, mode='lines+markers')])
-    pressure_fig = go.Figure(data=[go.Scatter(x=time_stamp_list, y=P_list, mode='lines+markers')])
-    specific_humidity_fig = go.Figure(data=[go.Scatter(x=time_stamp_list, y=specific_humidity_list, mode='lines+markers')])
+    threed_fig = go.Figure(data=[
+        go.Scatter3d(
+            x=T_interior_list,
+            y=H_interior_list,
+            z=P_interior_list,
+            mode='markers',
+            marker=dict(
+                color=[t.timestamp() for t in time_stamp_list],
+                colorscale='Turbo',  # Choose a color scale
+                opacity=0.8
+            ),
+            name='Interior'),
+        go.Scatter3d(
+            x=T_exterior_list,
+            y=H_exterior_list,
+            z=P_exterior_list,
+            mode='markers',
+            marker=dict(
+                color=[t.timestamp() for t in time_stamp_list],
+                colorscale='Inferno',  # Choose a color scale
+                opacity=0.8
+            ),
+            name='Exterior')
+    ])
+    temperature_fig = go.Figure(data=[
+        go.Scatter(x=time_stamp_list, y=T_interior_list, mode='lines+markers', name='Interior'), go.Scatter(x=time_stamp_list, y=T_exterior_list, mode='lines+markers', name='Exterior')
+        ])
+    humidity_fig = go.Figure(data=[
+        go.Scatter(x=time_stamp_list, y=H_interior_list, mode='lines+markers', name='Interior'), go.Scatter(x=time_stamp_list, y=H_exterior_list, mode='lines+markers', name='Exterior')
+        ])
+    pressure_fig = go.Figure(data=[
+        go.Scatter(x=time_stamp_list, y=P_interior_list, mode='lines+markers', name='Interior'), go.Scatter(x=time_stamp_list, y=P_exterior_list, mode='lines+markers', name='Exterior')
+        ])
+    specific_humidity_fig = go.Figure(data=[
+        go.Scatter(x=time_stamp_list, y=specific_humidity_interior_list, mode='lines+markers', name='Interior'), go.Scatter(x=time_stamp_list, y=specific_humidity_exterior_list, mode='lines+markers', name='Exterior')
+        ])
     analog_temperature_fig = go.Figure(data=[go.Scatter(x=time_stamp_list, y=Tint_list, mode='markers+text')])
     
     # Customize the plot appearance
@@ -75,11 +96,14 @@ def update_figures(slider_value):
             yaxis_title='Humidity [%]',
             zaxis_title='Pressure [bar]',
             annotations=[
-                {'x': T_list[0], 'y': H_list[0], 'z': P_list[0], 'text': time_stamp_list[0].strftime('%d/%m %H:%M')},
-                {'x': T_list[-1], 'y': H_list[-1], 'z': P_list[-1], 'text': time_stamp_list[-1].strftime('%d/%m %H:%M')}
+                {'x': T_interior_list[0], 'y': H_interior_list[0], 'z': P_interior_list[0], 'text': time_stamp_list[0].strftime('Interior - %d/%m %H:%M')},
+                {'x': T_interior_list[-1], 'y': H_interior_list[-1], 'z': P_interior_list[-1], 'text': time_stamp_list[-1].strftime('Interior -%d/%m %H:%M')},
+                {'x': next(x for x in T_exterior_list if not math.isnan(x)), 'y': next(y for y in H_exterior_list if not math.isnan(y)), 'z': next(z for z in P_exterior_list if not math.isnan(z)), 'text': time_stamp_list[0].strftime('Exterior - %d/%m %H:%M')},
+                {'x': next(x for x in reversed(T_exterior_list) if not math.isnan(x)), 'y': next(y for y in reversed(H_exterior_list) if not math.isnan(y)), 'z': next(z for z in reversed(P_exterior_list) if not math.isnan(z)), 'text': time_stamp_list[-1].strftime('Exterior - %d/%m %H:%M')}
             ]
         ),
-        height=800
+        height=800,
+        showlegend=False
     )
     temperature_fig.update_layout(
         paper_bgcolor='rgba(0,0,0,0.2)',
@@ -120,7 +144,7 @@ def update_figures(slider_value):
     analog_temperature_fig.update_layout(
         paper_bgcolor='rgba(0,0,0,0.2)',
         plot_bgcolor='rgba(0, 0, 0, 0.2)',
-        title="Old Analog Temperature Sensor (deprecated)",
+        title="Old Analog Temperature Sensor (Interior, deprecated)",
         xaxis_title="Time",
         yaxis_title="Temperature [°C]",
         xaxis_tickformat=tick_format,  # Format time axis as HH:MM
@@ -139,6 +163,9 @@ def get_latest_log_data(days_before = 1):
     H_interior_list = []
     P_interior_list = []
     Tint_list = []
+    T_exterior_list = []
+    H_exterior_list = []
+    P_exterior_list = []
     for log in logs_list:
         #time_stamp, T, H, P, Tint, _ = log.split('\t')
         split_line = log.split('\t')
@@ -147,20 +174,28 @@ def get_latest_log_data(days_before = 1):
         H_interior_list.append(float(split_line[2]))
         P_interior_list.append(float(split_line[3]))
         Tint_list.append(float(split_line[4]))
+        if len(split_line) > 6:
+            T_exterior_list.append(float(split_line[6]))
+            H_exterior_list.append(float(split_line[7]))
+            P_exterior_list.append(float(split_line[8]))
+        else:
+            T_exterior_list.append(float('nan'))
+            H_exterior_list.append(float('nan'))
+            P_exterior_list.append(float('nan'))
 
     print(f'Webpage refreshed at {to_date}.')
 
-    return time_stamp_list, T_interior_list, H_interior_list, P_interior_list, Tint_list
+    return time_stamp_list, T_interior_list, H_interior_list, P_interior_list, Tint_list, T_exterior_list, H_exterior_list, P_exterior_list
 
-def compute_specific_humidity(T_list, H_list, P_list):
-    # T_list in degC
-    # H_list in percentage
-    # P_list in bar
+def compute_specific_humidity(T_interior_list, H_interior_list, P_interior_list):
+    # T_interior_list in degC
+    # H_interior_list in percentage
+    # P_interior_list in bar
     specific_humidity_list = []
-    for i in range(len(T_list)):
-        saturation_press = 0.0061078 * math.exp((17.27 * T_list[i]) / (T_list[i] + 237.3)) # bar
-        vapor_press = H_list[i] / 100 * saturation_press
-        specific_humidity_list.append(1000 * vapor_press / (1.6078 * P_list[i] - 0.6078 * vapor_press))
+    for i in range(len(T_interior_list)):
+        saturation_press = 0.0061078 * math.exp((17.27 * T_interior_list[i]) / (T_interior_list[i] + 237.3)) # bar
+        vapor_press = H_interior_list[i] / 100 * saturation_press
+        specific_humidity_list.append(1000 * vapor_press / (1.6078 * P_interior_list[i] - 0.6078 * vapor_press))
     return specific_humidity_list # g H2O per Kg of humid air
 
 
@@ -212,7 +247,7 @@ app.layout = dbc.Container([
                     dbc.Row([
                         dash_table.DataTable(
                             id='info-data',
-                            columns=[{'id': 'Parameter', 'name': 'Parameter'}, {'id': 'Latest Value', 'name': 'Latest Value'}],
+                            columns=[{'id': 'Latest Value', 'name': 'Latest Value'}, {'id': 'Interior', 'name': 'Interior'}, {'id': 'Exterior', 'name': 'Exterior'}],
                             style_table={'minWidth': '300px'},
                             style_cell={'textAlign': 'center', 'backgroundColor': 'rgba(0, 0, 0, 0.2)'},
                             style_header={'backgroundColor': 'rgba(0, 0, 0, 0.4)', 'fontWeight': 'bold'}
