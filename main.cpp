@@ -34,7 +34,8 @@ int start_measuring()
     }
 
     // get sensor objects
-    BME280 bme280 = BME280(&i2c_bus, 0x76);
+    BME280 bme280_interior = BME280(&i2c_bus, 0x77);
+    BME280 bme280_exterior = BME280(&i2c_bus, 0x76);
     ADS1115 adc = ADS1115(&i2c_bus, 0x48);
     adc.set_config(1);
 
@@ -45,8 +46,8 @@ int start_measuring()
 
     while (true)
     {
-        float T_int, T, P, H;
-        float average_T_int = 0, average_T = 0, average_H = 0, average_P = 0;
+        float T_int, T_interior, P_interior, H_interior, T_exterior, P_exterior, H_exterior;
+        float average_T_int = 0, average_T_interior = 0, average_H_interior = 0, average_P_interior = 0, average_T_exterior = 0, average_H_exterior = 0, average_P_exterior = 0;
         int ret_code_sum = 0;
         for (size_t i = 0; i < AVERAGE; i++)
         {
@@ -54,19 +55,22 @@ int start_measuring()
 
 	    T_int = -66.875 + 218.75 * adc.read_voltage() / 3.3;
             average_T_int += T_int;
-            ret_code_sum += bme280.read_all(T, P, H);
-            average_T += T;
-            average_H += H;
-            average_P += P;
+            ret_code_sum += bme280_interior.read_all(T_interior, P_interior, H_interior) + bme280_exterior.read_all(T_exterior, P_exterior, H_exterior);
+            average_T_interior += T_interior;
+            average_H_interior += H_interior;
+            average_P_interior += P_interior;
+	    average_T_exterior += T_exterior;
+	    average_H_exterior += H_exterior;
+	    average_P_exterior += P_exterior;
 	    if (log_to_display)
 	    {
             	display.clear_display();
             	display.set_cursor(0, 0);
-            	display.put_string(to_string(T));
+            	display.put_string(to_string(T_interior));
             	display.set_cursor(0, 1);
-            	display.put_string(to_string(H));
+            	display.put_string(to_string(H_interior));
             	display.set_cursor(0, 2);
-            	display.put_string(to_string(P));
+            	display.put_string(to_string(P_interior));
             	display.set_cursor(0, 3);
                 display.put_string(to_string(T_int));
 	    }
@@ -77,14 +81,17 @@ int start_measuring()
 
         }
         average_T_int /= AVERAGE;
-        average_T /= AVERAGE;
-        average_H /= AVERAGE;
-        average_P /= AVERAGE;
+        average_T_interior /= AVERAGE;
+        average_H_interior /= AVERAGE;
+        average_P_interior /= AVERAGE;
+        average_T_exterior /= AVERAGE;
+        average_H_exterior /= AVERAGE;
+        average_P_exterior /= AVERAGE;
 
         auto timenow = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
 
         std::ostringstream info;
-        info << std::string(strtok(ctime(&timenow), "\n")) << '\t' << average_T << '\t' << average_H << '\t' << average_P << '\t' << average_T_int << '\t' << ret_code_sum;
+        info << std::string(strtok(ctime(&timenow), "\n")) << '\t' << average_T_interior << '\t' << average_H_interior << '\t' << average_P_interior << '\t' << average_T_int << '\t' << ret_code_sum << '\t' << average_T_exterior << '\t' << average_H_exterior << '\t' << average_P_exterior;
 	if (log_to_console)
             std::cout << info.str() << std::endl;
 

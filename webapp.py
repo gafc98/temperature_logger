@@ -135,21 +135,22 @@ def get_latest_log_data(days_before = 1):
     from_date = to_date - datetime.timedelta(days = days_before) # checks for last N days
     logs_list = logs_to_list(from_date, to_date, subsample=days_before)
     time_stamp_list = []
-    T_list = []
-    H_list = []
-    P_list = []
+    T_interior_list = []
+    H_interior_list = []
+    P_interior_list = []
     Tint_list = []
     for log in logs_list:
-        time_stamp, T, H, P, Tint, _ = log.split('\t')
-        time_stamp_list.append(datetime.datetime.strptime(time_stamp, DATE_FORMAT))
-        T_list.append(float(T))
-        H_list.append(float(H))
-        P_list.append(float(P))
-        Tint_list.append(float(Tint))
+        #time_stamp, T, H, P, Tint, _ = log.split('\t')
+        split_line = log.split('\t')
+        time_stamp_list.append(datetime.datetime.strptime(split_line[0], DATE_FORMAT))
+        T_interior_list.append(float(split_line[1]))
+        H_interior_list.append(float(split_line[2]))
+        P_interior_list.append(float(split_line[3]))
+        Tint_list.append(float(split_line[4]))
 
     print(f'Webpage refreshed at {to_date}.')
 
-    return time_stamp_list, T_list, H_list, P_list, Tint_list
+    return time_stamp_list, T_interior_list, H_interior_list, P_interior_list, Tint_list
 
 def compute_specific_humidity(T_list, H_list, P_list):
     # T_list in degC
