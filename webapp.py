@@ -167,7 +167,6 @@ def get_latest_log_data(days_before = 1):
     H_exterior_list = []
     P_exterior_list = []
     for log in logs_list:
-        #time_stamp, T, H, P, Tint, _ = log.split('\t')
         split_line = log.split('\t')
         time_stamp_list.append(datetime.datetime.strptime(split_line[0], DATE_FORMAT))
         T_interior_list.append(float(split_line[1]))

@@ -101,14 +101,25 @@ class DataProcessor:
             H_interior_list = []
             P_interior_list = []
             Tint_list = []
+            T_exterior_list = []
+            H_exterior_list = []
+            P_exterior_list = []
             for log in logs_list:
-                time_stamp, T, H, P, Tint, _ = log.split('\t')
-                time_stamp_list.append(datetime.datetime.strptime(time_stamp, DATE_FORMAT))
-                T_interior_list.append(float(T))
-                H_interior_list.append(float(H))
-                P_interior_list.append(float(P))
-                Tint_list.append(float(Tint))
-            self.days_data.append((time_stamp_list, T_interior_list, H_interior_list, P_interior_list, Tint_list))
+                split_line = log.split('\t')
+                time_stamp_list.append(datetime.datetime.strptime(split_line[0], DATE_FORMAT))
+                T_interior_list.append(float(split_line[1]))
+                H_interior_list.append(float(split_line[2]))
+                P_interior_list.append(float(split_line[3]))
+                Tint_list.append(float(split_line[4]))
+                if len(split_line) > 6:
+                    T_exterior_list.append(float(split_line[6]))
+                    H_exterior_list.append(float(split_line[7]))
+                    P_exterior_list.append(float(split_line[8]))
+                else:
+                    T_exterior_list.append(float('nan'))
+                    H_exterior_list.append(float('nan'))
+                    P_exterior_list.append(float('nan'))
+            self.days_data.append((time_stamp_list, T_interior_list, H_interior_list, P_interior_list, Tint_list, T_exterior_list, H_exterior_list, P_exterior_list))
 
     def produce_weather_report(self):
         fig, ax = plt.subplots(len(self.days_data), 3, figsize=(25, 40))
@@ -116,28 +127,34 @@ class DataProcessor:
 
         for i in range(len(self.days_data)):
             date = self.days[i].strftime("%a, %d-%m-%Y")
-            time_stamp_list, T_interior_list, H_interior_list, P_interior_list, Tint_list = self.days_data[i]
+            time_stamp_list, T_interior_list, H_interior_list, P_interior_list, Tint_list, T_exterior_list, H_exterior_list, P_exterior_list = self.days_data[i]
 
-            ax[i, 0].plot(time_stamp_list, T_interior_list)
+            ax[i, 0].plot(time_stamp_list, T_interior_list, label='Interior')
+            ax[i, 0].plot(time_stamp_list, T_exterior_list, label='Exterior')
             ax[i, 0].xaxis.set_major_formatter(matplotlib.dates.DateFormatter('%H:%M'))
             ax[i, 0].set_xlabel(date)
             ax[i, 0].set_ylabel("T [°C]")
             ax[i, 0].title.set_text('Temperature')
             ax[i, 0].grid(which='both',axis='both')
+            ax[i, 0].legend()
 
-            ax[i, 1].plot(time_stamp_list, H_interior_list)
+            ax[i, 1].plot(time_stamp_list, H_interior_list, label='Interior')
+            ax[i, 1].plot(time_stamp_list, H_exterior_list, label='Exterior')
             ax[i, 1].xaxis.set_major_formatter(matplotlib.dates.DateFormatter('%H:%M'))
             ax[i, 1].set_xlabel(date)
             ax[i, 1].set_ylabel("H [%]")
             ax[i, 1].title.set_text('Relative Humidity')
             ax[i, 1].grid(which='both',axis='both')
+            ax[i, 1].legend()
 
-            ax[i, 2].plot(time_stamp_list, P_interior_list)
+            ax[i, 2].plot(time_stamp_list, P_interior_list, label='Interior')
+            ax[i, 2].plot(time_stamp_list, P_exterior_list, label='Exterior')
             ax[i, 2].xaxis.set_major_formatter(matplotlib.dates.DateFormatter('%H:%M'))
             ax[i, 2].set_xlabel(date)
             ax[i, 2].set_ylabel("P [bar]")
             ax[i, 2].title.set_text('Atmospheric Pressure')
             ax[i, 2].grid(which='both',axis='both')
+            ax[i, 2].legend()
 
             #ax[i, 3].plot(time_stamp_list, Tint_list)
             #ax[i, 3].xaxis.set_major_formatter(matplotlib.dates.DateFormatter('%H:%M'))
@@ -146,15 +163,22 @@ class DataProcessor:
             #ax[i, 3].title.set_text('Temperature (analog sens.)')
             #ax[i, 3].grid(which='both',axis='both')
 
-
-
         self.image_buffer = BytesIO() # this will save the fig to the RAM instead of the hard disk
         fig.savefig(self.image_buffer, format='png', dpi=fig.get_dpi()*0.6, bbox_inches = 'tight')
         plt.close()
 
     def produce_email_message(self):
         # produce table data
-        table_data = [{"Temperature [°C]": round(average(day_data[1]), 2), "Humidity [%]": round(average(day_data[2]), 1), "Pressure [bar]": round(average(day_data[3]), 3)} for day_data in self.days_data]
+        table_data = [
+            {
+                "Int. Temperature [°C]": round(average(day_data[1]), 2),
+                "Int. Humidity [%]": round(average(day_data[2]), 1),
+                "Int. Pressure [bar]": round(average(day_data[3]), 3),
+                "Ext. Temperature [°C]": round(average(day_data[5]), 2),
+                "Ext. Humidity [%]": round(average(day_data[6]), 1),
+                "Ext. Pressure [bar]": round(average(day_data[7]), 3),
+            } for day_data in self.days_data
+        ]
         # Custom serial numbers
         table_days = [day.strftime("%a, %d-%m-%Y") for day in self.days[0:-1]]
         table = tabulate(table_data, headers="keys", showindex=table_days, tablefmt="html")
@@ -202,4 +226,3 @@ if __name__ == '__main__':
         future_email_date = next_weekday(now, 0).replace(hour=2, minute=0)
         time.sleep((future_email_date - now).total_seconds())
         send_the_emails(future_email_date)
-
