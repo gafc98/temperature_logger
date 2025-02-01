@@ -64,15 +64,32 @@ int start_measuring()
 	    average_P_exterior += P_exterior;
 	    if (log_to_display)
 	    {
-            	display.clear_display();
-            	display.set_cursor(0, 0);
-            	display.put_string(to_string(T_interior));
-            	display.set_cursor(0, 1);
-            	display.put_string(to_string(H_interior));
-            	display.set_cursor(0, 2);
-            	display.put_string(to_string(P_interior));
-            	display.set_cursor(0, 3);
-                display.put_string(to_string(T_int));
+		if (i % 2 ==0)
+		{
+            	    display.clear_display();
+		    display.set_cursor(0, 0);
+		    display.put_string("Interior");
+            	    display.set_cursor(0, 1);
+            	    display.put_string(to_string(T_interior));
+            	    display.set_cursor(0, 2);
+            	    display.put_string(to_string(H_interior));
+            	    display.set_cursor(0, 3);
+            	    display.put_string(to_string(P_interior));
+            	    display.set_cursor(0, 4);
+                    display.put_string(to_string(T_int));
+		}
+		else
+		{    
+            	    display.clear_display();
+		    display.set_cursor(0, 0);
+		    display.put_string("Exterior");
+		    display.set_cursor(0, 1);
+            	    display.put_string(to_string(T_exterior));
+		    display.set_cursor(0, 2);
+            	    display.put_string(to_string(H_exterior));
+		    display.set_cursor(0, 3);
+            	    display.put_string(to_string(P_exterior));
+		}
 	    }
             auto t_end = std::chrono::high_resolution_clock::now();
             float elapsed_time_us = std::chrono::duration<float, std::micro>(t_end - t_start).count();
