@@ -8,6 +8,7 @@
 #include "include/bme280.cpp"
 #include "include/dumper.cpp"
 #include "include/ssd1306.cpp"
+#include "include/laser_pointer_inverse_kinematics.cpp"
 
 #define SAMPLE_TIME 60000000 // useconds
 #define AVERAGE 60 // number of samples to average over the sampling time
@@ -39,6 +40,24 @@ int start_measuring()
     ADS1115 adc = ADS1115(&i2c_bus, 0x48);
     adc.set_config(1);
 
+	// get PWM servo controller object
+    PCA9685 pwm = PCA9685(&i2c_bus, 0x40);
+
+    // pwm initialization
+    pwm.turn_off();
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+    pwm.set_PWM_freq(50);
+    pwm.wake_up();
+
+	// initiate inverse kinematics object
+	InvKin inv_kin = InvKin(&pwm, 14, 15);
+    if (!inv_kin.load_cal())
+    {
+        inv_kin.perform_calibration();
+        inv_kin.save_cal();
+    }
+    inv_kin.make_xy_square();
+
     // simple dumper to place logs in
     Dumper dumper("log.txt");
 
@@ -53,49 +72,48 @@ int start_measuring()
         {
             auto t_start = std::chrono::high_resolution_clock::now();
 
-	    T_int = -66.875 + 218.75 * adc.read_voltage() / 3.3;
-            average_T_int += T_int;
-            ret_code_sum += bme280_interior.read_all(T_interior, P_interior, H_interior) + bme280_exterior.read_all(T_exterior, P_exterior, H_exterior);
-            average_T_interior += T_interior;
-            average_H_interior += H_interior;
-            average_P_interior += P_interior;
-	    average_T_exterior += T_exterior;
-	    average_H_exterior += H_exterior;
-	    average_P_exterior += P_exterior;
-	    if (log_to_display)
-	    {
-		if (i % 2 ==0)
-		{
-            	    display.clear_display();
-		    display.set_cursor(0, 0);
-		    display.put_string("Interior");
-            	    display.set_cursor(0, 1);
-            	    display.put_string(to_string(T_interior));
-            	    display.set_cursor(0, 2);
-            	    display.put_string(to_string(H_interior));
-            	    display.set_cursor(0, 3);
-            	    display.put_string(to_string(P_interior));
-            	    display.set_cursor(0, 4);
-                    display.put_string(to_string(T_int));
-		}
-		else
-		{    
-            	    display.clear_display();
-		    display.set_cursor(0, 0);
-		    display.put_string("Exterior");
-		    display.set_cursor(0, 1);
-            	    display.put_string(to_string(T_exterior));
-		    display.set_cursor(0, 2);
-            	    display.put_string(to_string(H_exterior));
-		    display.set_cursor(0, 3);
-            	    display.put_string(to_string(P_exterior));
-		}
-	    }
-            auto t_end = std::chrono::high_resolution_clock::now();
-            float elapsed_time_us = std::chrono::duration<float, std::micro>(t_end - t_start).count();
+			T_int = -66.875 + 218.75 * adc.read_voltage() / 3.3;
+			average_T_int += T_int;
+			ret_code_sum += bme280_interior.read_all(T_interior, P_interior, H_interior) + bme280_exterior.read_all(T_exterior, P_exterior, H_exterior);
+			average_T_interior += T_interior;
+			average_H_interior += H_interior;
+			average_P_interior += P_interior;
+			average_T_exterior += T_exterior;
+			average_H_exterior += H_exterior;
+			average_P_exterior += P_exterior;
+			if (log_to_display)
+			{
+				if (i % 2 ==0)
+				{
+					display.clear_display();
+					display.set_cursor(0, 0);
+					display.put_string("Interior");
+					display.set_cursor(0, 1);
+					display.put_string(to_string(T_interior));
+					display.set_cursor(0, 2);
+					display.put_string(to_string(H_interior));
+					display.set_cursor(0, 3);
+					display.put_string(to_string(P_interior));
+					display.set_cursor(0, 4);
+					display.put_string(to_string(T_int));
+				}
+				else
+				{    
+					display.clear_display();
+					display.set_cursor(0, 0);
+					display.put_string("Exterior");
+					display.set_cursor(0, 1);
+					display.put_string(to_string(T_exterior));
+					display.set_cursor(0, 2);
+					display.put_string(to_string(H_exterior));
+					display.set_cursor(0, 3);
+					display.put_string(to_string(P_exterior));
+				}
+			}
+			auto t_end = std::chrono::high_resolution_clock::now();
+			float elapsed_time_us = std::chrono::duration<float, std::micro>(t_end - t_start).count();
 
-            usleep(SLEEP_TIME - elapsed_time_us);
-
+			usleep(SLEEP_TIME - elapsed_time_us);
         }
         average_T_int /= AVERAGE;
         average_T_interior /= AVERAGE;
@@ -104,13 +122,14 @@ int start_measuring()
         average_T_exterior /= AVERAGE;
         average_H_exterior /= AVERAGE;
         average_P_exterior /= AVERAGE;
-
         auto timenow = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+
+		inv_kin.move_xy(average_T_exterior/15.0 - 1, (2.0*average_H_exterior - 110.0)/70.0, 5);
 
         std::ostringstream info;
         info << std::string(strtok(ctime(&timenow), "\n")) << '\t' << average_T_interior << '\t' << average_H_interior << '\t' << average_P_interior << '\t' << average_T_int << '\t' << ret_code_sum << '\t' << average_T_exterior << '\t' << average_H_exterior << '\t' << average_P_exterior;
-	if (log_to_console)
-            std::cout << info.str() << std::endl;
+		if (log_to_console)
+			std::cout << info.str() << std::endl;
 
         dumper.dump(info.str());
     }
