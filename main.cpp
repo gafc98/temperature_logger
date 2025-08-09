@@ -27,7 +27,7 @@ public:
         std::ifstream file("TH_to_XY.cal");
         if (!file)
         {
-            std::cout << "TH_to_XY.cal could not be opened. Using default parameters.\n"
+            std::cout << "TH_to_XY.cal could not be opened. Using default parameters.\n";
             return false; // File does not exist: return false
         }
 
