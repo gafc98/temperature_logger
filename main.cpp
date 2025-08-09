@@ -48,7 +48,7 @@ public:
     }
 private:
     float _denominator_T = 15.0, _offset_T = -15.0, _denominator_H = 35.0, _offset_H = -55.0; // linear conversion variables
-}
+};
 
 int start_measuring()
 {
