@@ -82,11 +82,6 @@ public:
             set_PWM(i, 0, 0);
     }
 
-    ~PCA9685()
-    {
-        turn_off();
-    }
-
 private:
     I2C_BUS* _i2c_bus;
     __u16 _device_address;

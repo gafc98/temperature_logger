@@ -8,6 +8,7 @@
 #include "include/bme280.cpp"
 #include "include/dumper.cpp"
 #include "include/ssd1306.cpp"
+#include "include/pca9685.cpp"
 #include "include/laser_pointer_inverse_kinematics.cpp"
 
 #define SAMPLE_TIME 60000000 // useconds

@@ -17,9 +17,9 @@ class SSD1306
 public:
     SSD1306(I2C_BUS* i2c_bus, __u16 device_address = 0x3C)
     {
-    _i2c_bus = i2c_bus;
-    _device_address = device_address;
-           memset(_chars_in_line, 128 / font8x8[0], 8); // 1st time assumes all lines are full
+        _i2c_bus = i2c_bus;
+        _device_address = device_address;
+        memset(_chars_in_line, 128 / font8x8[0], 8); // 1st time assumes all lines are full
     }
 
     void set_config()
