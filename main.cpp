@@ -162,7 +162,7 @@ int start_measuring()
         average_P_exterior /= AVERAGE;
         auto timenow = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
 
-        inv_kin.move_xy(TH_To_XY.compute_X(average_T_exterior), TH_To_XY.compute_Y(average_H_exterior), 5);
+        inv_kin.move_xy(TH_To_XY.compute_X(average_T_exterior), TH_To_XY.compute_Y(average_H_exterior));
 
         std::ostringstream info;
         info << std::string(strtok(ctime(&timenow), "\n")) << '\t' << average_T_interior << '\t' << average_H_interior << '\t' << average_P_interior << '\t' << average_T_int << '\t' << ret_code_sum << '\t' << average_T_exterior << '\t' << average_H_exterior << '\t' << average_P_exterior;

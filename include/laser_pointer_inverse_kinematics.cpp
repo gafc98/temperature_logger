@@ -33,13 +33,25 @@ public:
         std::cout << "Making square.\n";
         float X, Y = -1.0, step = 0.01;
         for (X = -1.0; X <= 1.0; X += step)
-            move_xy(X, Y, 50);
+        {
+            move_xy(X, Y);
+            usleep(20000);
+        }
         for (Y = -1.0; Y <= 1.0; Y += step)
-            move_xy(X, Y, 50);
+        {
+            move_xy(X, Y);
+            usleep(20000);
+        }
         for (X = 1.0; X >= -1.0; X -= step)
-            move_xy(X, Y, 50);
+        {
+            move_xy(X, Y);
+            usleep(20000);
+        }
         for (Y = 1.0; Y >= -1.0; Y -= step)
-            move_xy(X, Y, 50);
+        {
+            move_xy(X, Y);
+            usleep(20000);
+        }
     }
 
     void perform_calibration()
@@ -75,12 +87,10 @@ public:
         std::cout << "Finished calibration.\n";
     }
 
-    void move_xy(float X, float Y, uint16_t delay_ms = 10)
+    void move_xy(float X, float Y)
     {
         _pwm->set_PWM(_phi_channel, 0, compute_phi(X, Y));
-        usleep(delay_ms * 1000);
         _pwm->set_PWM(_theta_channel, 0, compute_theta(X, Y));
-        usleep(delay_ms * 1000);
     }
 
     inline uint16_t compute_phi(float X, float Y) const
