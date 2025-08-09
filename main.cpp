@@ -25,9 +25,11 @@ public:
     bool load_cal()
     {
         std::ifstream file("TH_to_XY.cal");
-        bool success = true;
         if (!file)
+        {
+            std::cout << "TH_to_XY.cal could not be opened. Using default parameters.\n"
             return false; // File does not exist: return false
+        }
 
         file >> _denominator_T >> _offset_T >> _denominator_H >> _offset_H;
 

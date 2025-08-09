@@ -105,7 +105,6 @@ public:
     bool load_cal()
     {
         std::ifstream file("laser_servo_kin.cal");
-        bool success = true;
         if (!file)
             return false; // File does not exist: return false
 
