@@ -112,7 +112,7 @@ public:
         file >> a11 >> a12 >> a21 >> a22 >> b1 >> b2;
 
         if (file.fail())
-            std::cerr << "Warning: Failed to read all calibration values.\n";
+            std::cerr << "Failed to read inverse kinematics calibration values.\n";
 
         return true;
     }

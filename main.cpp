@@ -1,5 +1,6 @@
 #include <iostream>
 #include <ctime>
+#include <chrono>
 #include <string.h>
 #include <sstream>
 #include "include/i2c_bus.cpp"
@@ -18,6 +19,37 @@ __u8 i2c_bus_number = 1;
 bool log_to_console = false;
 bool log_to_display = true;
 
+class Load_TH_To_XY_Parameters
+{
+public:
+    bool load_cal()
+    {
+        std::ifstream file("TH_to_XY.cal");
+        bool success = true;
+        if (!file)
+            return false; // File does not exist: return false
+
+        file >> _denominator_T >> _offset_T >> _denominator_H >> _offset_H;
+
+        if (file.fail())
+            std::cerr << "Failed to read TH_to_XY conversion values.\n";
+
+        return true;
+    }
+
+    inline float compute_X(float T)
+    {
+        return (T + _offset_T) / _denominator_T;
+    }
+
+    inline float compute_Y(float H)
+    {
+        return (H + _offset_H) / _denominator_H;
+    }
+private:
+    float _denominator_T = 15.0, _offset_T = -15.0, _denominator_H = 35.0, _offset_H = -55.0; // linear conversion variables
+}
+
 int start_measuring()
 {
     // get main i2c bus object
@@ -30,7 +62,7 @@ int start_measuring()
     display.set_config();
         display.clear_display();
         display.put_string("Inilializing...");
-        usleep(10000000);
+        usleep(1000000);
     }
 
     // get sensor objects
@@ -47,6 +79,10 @@ int start_measuring()
     usleep(10000);
     pwm.set_PWM_freq(50);
     pwm.wake_up();
+
+    // Load TH_To_XY conversion parameters
+    Load_TH_To_XY_Parameters TH_To_XY;
+    TH_To_XY.load_cal();
 
     // initiate inverse kinematics object
     InvKin inv_kin = InvKin(&pwm, 14, 15);
@@ -123,7 +159,7 @@ int start_measuring()
         average_P_exterior /= AVERAGE;
         auto timenow = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
 
-        inv_kin.move_xy(average_T_exterior/15.0 - 1, (2.0*average_H_exterior - 110.0)/70.0, 5);
+        inv_kin.move_xy(TH_To_XY.compute_X(average_T_exterior), TH_To_XY.compute_Y(average_H_exterior), 5);
 
         std::ostringstream info;
         info << std::string(strtok(ctime(&timenow), "\n")) << '\t' << average_T_interior << '\t' << average_H_interior << '\t' << average_P_interior << '\t' << average_T_int << '\t' << ret_code_sum << '\t' << average_T_exterior << '\t' << average_H_exterior << '\t' << average_P_exterior;
@@ -142,18 +178,23 @@ int main(int argc, char* argv[])
     {
         // Check if the argument starts with "-opt" (option flag)
         if (argv[i][0] == '-')
-    {
-        if (strcmp(argv[i], "-i2c_bus") == 0)
-            i2c_bus_number = std::atoi(argv[i + 1]);
-        else if (strcmp(argv[i], "-log_to_console") == 0)
-            log_to_console = true;
-        else if (strcmp(argv[i], "-no_screen") == 0)
-            log_to_display = false;
-        else
+        {
+            if (strcmp(argv[i], "-i2c_bus") == 0)
+                i2c_bus_number = std::atoi(argv[i + 1]);
+            else if (strcmp(argv[i], "-log_to_console") == 0)
+                log_to_console = true;
+            else if (strcmp(argv[i], "-no_screen") == 0)
+                log_to_display = false;
+            else
             {
-        std::cout << "This program is used to log the temperature loggings to a log file.\nUsage:\n.\\logger [-help] [-i2c_bus N] [-log_to_console] [-no_screen]\nRuntime options available:\n-i2c_bus N         Allows the user to specify the i2c bus number (1 is default);\n-log_to_console    Logging will also be done on console along with file;\n-no_screen         Will disable SSD1306 screen logging.\n" << std::endl;
-        return 0;
-        }
+                std::cout << "This program is used to log the temperature loggings to a log file.\n
+                                Usage:\n
+                                .\\logger [-help] [-i2c_bus N] [-log_to_console] [-no_screen]\nRuntime options available:\n
+                                -i2c_bus N         Allows the user to specify the i2c bus number (1 is default);\n
+                                -log_to_console    Logging will also be done on console along with file;\n
+                                -no_screen         Will disable SSD1306 screen logging.\n" << std::endl;
+                return 0;
+            }
         }
     }
 
