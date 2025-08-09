@@ -187,12 +187,12 @@ int main(int argc, char* argv[])
                 log_to_display = false;
             else
             {
-                std::cout << "This program is used to log the temperature loggings to a log file.\n
-                                Usage:\n
-                                .\\logger [-help] [-i2c_bus N] [-log_to_console] [-no_screen]\nRuntime options available:\n
-                                -i2c_bus N         Allows the user to specify the i2c bus number (1 is default);\n
-                                -log_to_console    Logging will also be done on console along with file;\n
-                                -no_screen         Will disable SSD1306 screen logging.\n" << std::endl;
+                std::cout <<    "This program is used to log the temperature loggings to a log file.\n"
+                                "Usage:\n"
+                                ".\\logger [-help] [-i2c_bus N] [-log_to_console] [-no_screen]\nRuntime options available:\n"
+                                "-i2c_bus N         Allows the user to specify the i2c bus number (1 is default);\n"
+                                "-log_to_console    Logging will also be done on console along with file;\n"
+                                "-no_screen         Will disable SSD1306 screen logging.\n" << std::endl;
                 return 0;
             }
         }
@@ -201,7 +201,9 @@ int main(int argc, char* argv[])
     while (true)
     {
         try
+        {
             start_measuring();
+        }
         catch (const std::runtime_error& e)
         {
             // restart measuring after 10 seconds to try to fight error...
