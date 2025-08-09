@@ -1,9 +1,7 @@
-#include "i2c_bus.cpp"
-
 #ifndef _PCA9685_
 #define _PCA9685_
 
-#include <thread>
+#include "i2c_bus.cpp"
 
 #define PCA9685_I2C_ADDRESS 0x40      /**< Default PCA9685 I2C Slave Address */
 #define FREQUENCY_OSCILLATOR 25000000 /**< Int. osc. frequency in datasheet */
@@ -48,11 +46,11 @@ public:
         __u8 pre_scale = (__u8)pre_scale_val;
 
         __u8 old_mode = read8(PCA9685_MODE1);
-        __u8 new_mode = (old_mode & ~MODE1_RESTART) | MODE1_SLEEP; // sleep
-        write8(PCA9685_MODE1, new_mode);                          // go to sleep
-        write8(PCA9685_PRESCALE, pre_scale); // set the prescaler
+        __u8 new_mode = (old_mode & ~MODE1_RESTART) | MODE1_SLEEP;  // sleep
+        write8(PCA9685_MODE1, new_mode);                            // go to sleep
+        write8(PCA9685_PRESCALE, pre_scale);                        // set the prescaler
         write8(PCA9685_MODE1, old_mode);
-        std::this_thread::sleep_for(std::chrono::milliseconds(5));
+        usleep(5000);
         // This sets the MODE1 register to turn on auto increment.
         write8(PCA9685_MODE1, old_mode | MODE1_RESTART | MODE1_AI);
     }

@@ -76,11 +76,11 @@ class BME280
 {
 public:
     BME280(I2C_BUS* i2c_bus, __u16 device_address = 0x77)
-	{
-		_i2c_bus = i2c_bus;
-		_device_address = device_address;
-		set_config();
-	}
+    {
+        _i2c_bus = i2c_bus;
+        _device_address = device_address;
+        set_config();
+    }
 
     void set_config()
     {
@@ -280,8 +280,8 @@ private:
         write8(BME280_REGISTER_CONTROL, 111); // 110
     }
 
-	__u16 _device_address;
-	I2C_BUS* _i2c_bus;
+    __u16 _device_address;
+    I2C_BUS* _i2c_bus;
     bme280_calib_data _bme280_calib;
 };
 

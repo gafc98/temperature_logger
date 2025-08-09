@@ -1,3 +1,6 @@
+#ifndef _DUMPER_
+#define _DUMPER_
+
 // basic file operations
 #include <iostream>
 #include <fstream>
@@ -27,3 +30,5 @@ public:
 private:
     string _file_name;
 };
+
+#endif //_DUMPER_

@@ -2,8 +2,6 @@
 #define _LASER_INV_KIN_
 
 #include <iostream>
-#include <thread>
-#include <chrono>
 #include <cmath>
 #include <fstream>
 #include "pca9685.cpp"
@@ -21,12 +19,12 @@ public:
         for (uint16_t a0 = MIN_SERVO; a0 < MAX_SERVO; a0++)
         {
             _pwm->set_PWM(_phi_channel, 0, a0);
-            std::this_thread::sleep_for(std::chrono::milliseconds(200));
+            usleep(200000);
         }
         for (uint16_t a1 = MIN_SERVO; a1 < MAX_SERVO; a1++)
         {
             _pwm->set_PWM(_theta_channel, 0, a1);
-            std::this_thread::sleep_for(std::chrono::milliseconds(200));
+            usleep(200000);
         }
     }
 
@@ -80,9 +78,9 @@ public:
     void move_xy(float X, float Y, uint16_t delay_ms = 10)
     {
         _pwm->set_PWM(_phi_channel, 0, compute_phi(X, Y));
-        std::this_thread::sleep_for(std::chrono::milliseconds(delay_ms));
+        usleep(delay_ms * 1000);
         _pwm->set_PWM(_theta_channel, 0, compute_theta(X, Y));
-        std::this_thread::sleep_for(std::chrono::milliseconds(delay_ms));
+        usleep(delay_ms * 1000);
     }
 
     inline uint16_t compute_phi(float X, float Y) const
