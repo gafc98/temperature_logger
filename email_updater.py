@@ -187,7 +187,7 @@ class DataProcessor:
         <p>Dear receiver,</p>
         <p><br></p>
         <p>Hereby the weather report from my apartment in Eindhoven of <strong>week {self.days[0].strftime("%V")} of {self.days[0].strftime("%Y")}</strong>.</p>
-        <p>Have you checked out the live <a href="https://home.gafc.info/" target="_blank" rel="noopener noreferrer">dashboard</a>?</p>
+        <p>Have you checked out the live <a href="https://home.gafc.space/" target="_blank" rel="noopener noreferrer">dashboard</a>?</p>
         <p>Here's a table with the average data on each day:</p>
 	    {table}
         <p><br></p>
