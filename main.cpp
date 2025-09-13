@@ -23,19 +23,21 @@ bool log_to_display = true;
 class Load_TH_To_XY_Parameters
 {
 public:
+    Load_TH_To_XY_Parameters(std::string cal_file_name) : _cal_filename(cal_file_name) {}
+
     bool load_cal()
     {
-        std::ifstream file("TH_to_XY.cal");
+        std::ifstream file(_cal_filename);
         if (!file)
         {
-            std::cout << "TH_to_XY.cal could not be opened. Using default parameters.\n";
+            std::cout << _cal_filename << " could not be opened. Using default parameters.\n";
             return false; // File does not exist: return false
         }
 
         file >> _denominator_T >> _offset_T >> _denominator_H >> _offset_H;
 
         if (file.fail())
-            std::cerr << "Failed to read TH_to_XY conversion values.\n";
+            std::cerr << "Failed to read TH_to_XY conversion values from " << _cal_filename << "\n";
 
         return true;
     }
@@ -51,6 +53,7 @@ public:
     }
 private:
     float _denominator_T = 15.0, _offset_T = -15.0, _denominator_H = 35.0, _offset_H = -55.0; // linear conversion variables
+    std::string _cal_filename;
 };
 
 int start_measuring()
@@ -84,17 +87,29 @@ int start_measuring()
     pwm.wake_up();
 
     // Load TH_To_XY conversion parameters
-    Load_TH_To_XY_Parameters TH_To_XY;
-    TH_To_XY.load_cal();
+    Load_TH_To_XY_Parameters red_TH_To_XY("red_TH_to_XY.cal");
+    red_TH_To_XY.load_cal();
+    Load_TH_To_XY_Parameters green_TH_To_XY("green_TH_to_XY.cal");
+    green_TH_To_XY.load_cal();
 
     // initiate inverse kinematics object
-    InvKin inv_kin = InvKin(&pwm, 14, 15);
-    if (!inv_kin.load_cal())
+    InvKin red_inv_kin = InvKin(&pwm, 14, 15, "red_laser_servo_kin.cal");
+    if (!red_inv_kin.load_cal())
     {
-        inv_kin.perform_calibration();
-        inv_kin.save_cal();
+        red_inv_kin.perform_calibration();
+        red_inv_kin.save_cal();
     }
-    inv_kin.make_xy_square();
+
+    InvKin green_inv_kin = InvKin(&pwm, 8, 9, "green_laser_servo_kin.cal");
+    if (!green_inv_kin.load_cal())
+    {
+        green_inv_kin.perform_calibration();
+        green_inv_kin.save_cal();
+    }
+
+    // make visual check squares
+    green_inv_kin.make_xy_square();
+    red_inv_kin.make_xy_square();
 
     // simple dumper to place logs in
     Dumper dumper("log.txt");
@@ -162,7 +177,8 @@ int start_measuring()
         average_P_exterior /= AVERAGE;
         auto timenow = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
 
-        inv_kin.move_xy(TH_To_XY.compute_X(average_T_exterior), TH_To_XY.compute_Y(average_H_exterior));
+        red_inv_kin.move_xy(red_TH_To_XY.compute_X(average_T_exterior), red_TH_To_XY.compute_Y(average_H_exterior));
+        green_inv_kin.move_xy(green_TH_To_XY.compute_X(average_T_exterior), green_TH_To_XY.compute_Y(average_H_exterior));
 
         std::ostringstream info;
         info << std::string(strtok(ctime(&timenow), "\n")) << '\t' << average_T_interior << '\t' << average_H_interior << '\t' << average_P_interior << '\t' << average_T_int << '\t' << ret_code_sum << '\t' << average_T_exterior << '\t' << average_H_exterior << '\t' << average_P_exterior;

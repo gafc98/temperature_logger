@@ -4,6 +4,7 @@
 #include <iostream>
 #include <cmath>
 #include <fstream>
+#include <string.h>
 #include "pca9685.cpp"
 
 #define MAX_SERVO 600
@@ -12,7 +13,7 @@
 class InvKin
 {
 public:
-    InvKin(PCA9685 * pwm, uint8_t phi_channel, uint8_t theta_channel) : _pwm(pwm), _phi_channel(phi_channel), _theta_channel(theta_channel) {}
+    InvKin(PCA9685 * pwm, uint8_t phi_channel, uint8_t theta_channel, std::string cal_file_name) : _pwm(pwm), _phi_channel(phi_channel), _theta_channel(theta_channel), _cal_file_name(cal_file_name) {}
 
     void servo_range_sweep()
     {
@@ -105,16 +106,16 @@ public:
 
     void save_cal()
     {
-        std::ofstream file("laser_servo_kin.cal", std::ios::trunc);
+        std::ofstream file(_cal_file_name, std::ios::trunc);
         if (!file)
-            std::cerr << "Error: Cannot write to file 'laser_servo_kin.cal'" << std::endl;
+            std::cerr << "Error: Cannot write to file '" << _cal_file_name << "'" << std::endl;
 
         file << a11 << "\n" << a12 << "\n" << a21 << "\n" << a22 << "\n" << b1 << "\n" << b2;
     }
 
     bool load_cal()
     {
-        std::ifstream file("laser_servo_kin.cal");
+        std::ifstream file(_cal_file_name); //"laser_servo_kin.cal"
         if (!file)
             return false; // File does not exist: return false
 
@@ -217,6 +218,7 @@ private:
     float a11, a12, a21, a22, b1, b2;
     PCA9685 * _pwm;
     uint8_t _phi_channel, _theta_channel;
+    std::string _cal_file_name;
 };
 
 #endif // _LASER_INV_KIN_
