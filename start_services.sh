@@ -1,5 +1,7 @@
 #!/bin/bash
 
+cd "$(dirname "$0")" || exit
+
 if tmux has-session -t temperature_logger 2>/dev/null; then
 	echo "Temperature logging services are already running."
 else
