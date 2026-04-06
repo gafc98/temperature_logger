@@ -1,7 +1,9 @@
 #!/bin/bash
-if tmux has-session -t temperature_logger; then
-    tmux kill-ses -t temperature_logger
-    echo "Temperature logger services killed."
+
+if tmux has-session -t temperature_logger 2>/dev/null; then
+	echo "Stopping temperature logging services..."
+	tmux kill-session -t temperature_logger
+	echo "Services successfully stopped."
 else
-    echo "Temperature logging services are not running."
+	echo "Temperature logging services are not currently running."
 fi
