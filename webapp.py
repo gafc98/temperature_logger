@@ -74,7 +74,7 @@ def update_figures(slider_value):
         go.Scatter(x=time_stamp_list, y=H_interior_list, mode='lines+markers', name='Interior'), go.Scatter(x=time_stamp_list, y=H_exterior_list, mode='lines+markers', name='Exterior')
         ])
     pressure_fig = go.Figure(data=[
-        go.Scatter(x=time_stamp_list, y=P_interior_list, mode='lines+markers', name='Interior'), go.Scatter(x=time_stamp_list, y=P_exterior_list, mode='lines+markers', name='Exterior')
+        go.Scatter(x=time_stamp_list, y=P_interior_list, mode='lines+markers', name='Interior'), go.Scatter(x=time_stamp_list, y=P_exterior_list, name='Exterior')
         ])
     specific_humidity_fig = go.Figure(data=[
         go.Scatter(x=time_stamp_list, y=specific_humidity_interior_list, mode='lines+markers', name='Interior'), go.Scatter(x=time_stamp_list, y=specific_humidity_exterior_list, mode='lines+markers', name='Exterior')
@@ -280,4 +280,4 @@ app.layout = dbc.Container([
 
 
 if __name__ == '__main__':
-    app.run_server(debug=os.getenv('WEBAPP_DEBUG', False)=='true')
+    app.run(debug=os.getenv('WEBAPP_DEBUG', False)=='true', host='0.0.0.0')
