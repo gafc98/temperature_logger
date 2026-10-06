@@ -1,5 +1,9 @@
-logger: main.cpp
-	g++ -fdiagnostics-color=always -g main.cpp -Ofast -std=c++17 -o logger
+CXX ?= g++
+CXXFLAGS ?= -O2 -std=c++17
 
+logger: main.cpp $(wildcard include/*.cpp)
+	$(CXX) $(CXXFLAGS) main.cpp -o logger
+
+.PHONY: clean
 clean:
-	rm logger
+	rm -f logger

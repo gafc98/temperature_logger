@@ -1,0 +1,234 @@
+:root {
+    --ink: #25342e;
+    --muted: #65746c;
+    --paper: #f2f4ed;
+    --panel: #ffffff;
+    --line: #d9e1d8;
+    --green: #267557;
+    --coral: #e87957;
+}
+
+body {
+    margin: 0;
+    color: var(--ink);
+    background-color: var(--paper);
+    background-image: linear-gradient(rgba(38, 117, 87, 0.035) 1px, transparent 1px),
+                      linear-gradient(90deg, rgba(38, 117, 87, 0.035) 1px, transparent 1px);
+    background-size: 36px 36px;
+    font-family: "Trebuchet MS", sans-serif;
+}
+
+.dashboard.container-fluid {
+    width: min(100%, 1480px);
+    padding: 0 40px;
+}
+
+.masthead {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 28px;
+    padding: 60px 0 32px;
+    border-bottom: 1px solid var(--line);
+    animation: enter 420ms ease-out both;
+}
+
+.eyebrow {
+    margin: 0 0 8px;
+    color: var(--green);
+    font-size: 11px;
+    font-weight: 700;
+}
+
+.masthead h1 {
+    margin: 0;
+    color: var(--ink);
+    font-family: Georgia, serif;
+    font-size: 44px;
+    font-weight: 400;
+}
+
+.intro-copy {
+    margin: 10px 0 0;
+    color: var(--muted);
+    font-size: 15px;
+}
+
+.header-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    padding-bottom: 5px;
+}
+
+.header-links a {
+    color: var(--ink);
+    font-size: 13px;
+    text-decoration-color: #a7baac;
+    text-underline-offset: 4px;
+}
+
+.header-links a:hover {
+    color: var(--green);
+}
+
+.range-panel {
+    display: grid;
+    grid-template-columns: 185px minmax(0, 1fr);
+    align-items: center;
+    gap: 28px;
+    padding: 25px 0 32px;
+    border-bottom: 1px solid var(--line);
+}
+
+.section-title {
+    margin: 0;
+    color: var(--ink);
+    font-family: Georgia, serif;
+    font-size: 21px;
+}
+
+.range-slider {
+    margin: 6px 12px 22px;
+}
+
+.range-slider .rc-slider-rail {
+    height: 4px;
+    background: #dce4dc;
+}
+
+.range-slider .rc-slider-track {
+    height: 4px;
+    background: var(--green);
+}
+
+.range-slider .rc-slider-handle {
+    width: 16px;
+    height: 16px;
+    margin-top: -6px;
+    border: 3px solid var(--green);
+    background: var(--paper);
+    box-shadow: none;
+}
+
+.range-slider .rc-slider-mark-text {
+    color: var(--muted);
+    font-size: 11px;
+    white-space: nowrap;
+}
+
+.readings-panel,
+.charts-section {
+    padding-top: 34px;
+}
+
+.section-heading {
+    margin-bottom: 14px;
+}
+
+#info-data .dash-table-container,
+#info-data .dash-spreadsheet-container,
+#info-data .dash-spreadsheet-inner,
+#info-data table {
+    width: 100%;
+    background: transparent !important;
+}
+
+#info-data .dash-cell {
+    color: var(--ink) !important;
+    background: rgba(255, 255, 255, 0.74) !important;
+    font-family: "Trebuchet MS", sans-serif !important;
+    font-size: 14px !important;
+}
+
+#info-data .dash-header {
+    color: var(--muted) !important;
+    background: transparent !important;
+    font-size: 11px !important;
+    text-transform: uppercase;
+}
+
+#info-data .dash-row:nth-child(2) .dash-cell {
+    border-top: 1px solid var(--line) !important;
+}
+
+.chart-row {
+    margin-bottom: 16px;
+}
+
+.chart-row > div {
+    min-width: 0;
+    overflow: hidden;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    background: var(--panel);
+    box-shadow: 0 8px 24px rgba(37, 52, 46, 0.04);
+}
+
+.chart-row .dash-graph {
+    width: 100%;
+}
+
+.legacy-panel {
+    margin-top: 28px;
+    border-top: 1px solid var(--line);
+    border-bottom: 1px solid var(--line);
+    color: var(--muted);
+}
+
+.legacy-panel summary {
+    padding: 16px 0;
+    color: var(--ink);
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.legacy-panel .dash-graph {
+    margin-bottom: 16px;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    background: var(--panel);
+}
+
+.page-footer {
+    padding: 25px 0 38px;
+    color: var(--muted);
+    font-size: 11px;
+}
+
+@keyframes enter {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@media (max-width: 700px) {
+    .dashboard.container-fluid {
+        padding: 0 18px;
+    }
+
+    .masthead {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 18px;
+        padding-top: 38px;
+    }
+
+    .masthead h1 {
+        font-size: 36px;
+    }
+
+    .range-panel {
+        grid-template-columns: 1fr;
+        gap: 16px;
+    }
+
+    .range-slider {
+        margin-right: 8px;
+        margin-left: 8px;
+    }
+
+    .range-slider .rc-slider-mark-text {
+        font-size: 10px;
+    }
+}

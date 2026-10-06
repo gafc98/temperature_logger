@@ -21,6 +21,37 @@ envars = curr_dir / ".env"
 load_dotenv(envars)
 NEWSLETTER_LINK = os.getenv("FORM_LINK")
 
+
+def style_time_series_figure(figure, title, y_axis_title, tick_format):
+    figure.update_layout(
+        template="plotly_white",
+        paper_bgcolor="rgba(0, 0, 0, 0)",
+        plot_bgcolor="rgba(0, 0, 0, 0)",
+        colorway=["#267557", "#e87957", "#447da8"],
+        font=dict(color="#25342e", family="Trebuchet MS"),
+        title=dict(text=title, x=0.02, xanchor="left", font=dict(size=18)),
+        xaxis=dict(title="Time", tickformat=tick_format, gridcolor="#e4e9e2"),
+        yaxis=dict(title=y_axis_title, gridcolor="#e4e9e2"),
+        margin=dict(l=54, r=20, t=66, b=48),
+        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
+    )
+
+def empty_figure(title):
+    figure = go.Figure()
+    figure.add_annotation(text="No readings in this period", showarrow=False)
+    figure.update_layout(
+        template="plotly_white",
+        paper_bgcolor="rgba(0, 0, 0, 0)",
+        plot_bgcolor="rgba(0, 0, 0, 0)",
+        font=dict(color="#65746c", family="Trebuchet MS"),
+        title=dict(text=title, x=0.02, xanchor="left", font=dict(size=18, color="#25342e")),
+        xaxis=dict(visible=False),
+        yaxis=dict(visible=False),
+        margin=dict(l=20, r=20, t=66, b=20),
+    )
+    return figure
+
+
 @app.callback(
     [dash.Output('3d-scatter-graph', 'figure'),
      dash.Output('temperature-graph', 'figure'),
@@ -33,6 +64,20 @@ NEWSLETTER_LINK = os.getenv("FORM_LINK")
 )
 def update_figures(slider_value):
     time_stamp_list, T_interior_list, H_interior_list, P_interior_list, Tint_list, T_exterior_list, H_exterior_list, P_exterior_list = get_latest_log_data(days_before=MARKS_TO_DAYS[slider_value])
+
+    if not time_stamp_list:
+        info_data = [{"Latest Value": "Status", "Interior": "No recent readings", "Exterior": "No recent readings"}]
+        empty_figures = [
+            empty_figure(title) for title in (
+                "Temperature, humidity, and pressure",
+                "Temperature",
+                "Relative humidity",
+                "Atmospheric pressure",
+                "Specific humidity",
+                "Legacy analog sensor",
+            )
+        ]
+        return (*empty_figures, info_data)
     
     info_data = [
         {'Latest Value': 'Temperature', 'Interior': f'{T_interior_list[0]:.2f} \u2103', 'Exterior': f'{T_exterior_list[0]:.2f} \u2103'},
@@ -87,9 +132,11 @@ def update_figures(slider_value):
         tick_format = '%d/%m ' + tick_format
 
     threed_fig.update_layout(
-        paper_bgcolor='rgba(0, 0, 0, 0.2)',
-        plot_bgcolor='rgba(0, 0, 0, 0.2)',
-        template='plotly_dark',
+        paper_bgcolor='rgba(0, 0, 0, 0)',
+        plot_bgcolor='rgba(0, 0, 0, 0)',
+        template='plotly_white',
+        colorway=["#267557", "#e87957"],
+        font=dict(color="#25342e", family="Trebuchet MS"),
         title='Temperature, Humidity, and Pressure',
         scene=dict(
             xaxis_title='Temperature [°C]',
@@ -102,54 +149,15 @@ def update_figures(slider_value):
                 {'x': next(x for x in reversed(T_exterior_list) if not math.isnan(x)), 'y': next(y for y in reversed(H_exterior_list) if not math.isnan(y)), 'z': next(z for z in reversed(P_exterior_list) if not math.isnan(z)), 'text': time_stamp_list[-1].strftime('Exterior - %d/%m %H:%M')}
             ]
         ),
-        height=800,
+        height=620,
+        margin=dict(l=0, r=0, t=58, b=0),
         showlegend=False
     )
-    temperature_fig.update_layout(
-        paper_bgcolor='rgba(0,0,0,0.2)',
-        plot_bgcolor='rgba(0, 0, 0, 0.2)',
-        title="Temperature",
-        xaxis_title="Time",
-        yaxis_title="Temperature [°C]",
-        xaxis_tickformat=tick_format,  # Format time axis as HH:MM
-        template="plotly_dark",  # Choose a dark theme for better contrast
-    )
-    humidity_fig.update_layout(
-        paper_bgcolor='rgba(0,0,0,0.2)',
-        plot_bgcolor='rgba(0, 0, 0, 0.2)',
-        title="Relative Humidity",
-        xaxis_title="Time",
-        yaxis_title="Humidity [%]",
-        xaxis_tickformat=tick_format,  # Format time axis as HH:MM
-        template="plotly_dark",  # Choose a dark theme for better contrast
-    )
-    pressure_fig.update_layout(
-        paper_bgcolor='rgba(0,0,0,0.2)',
-        plot_bgcolor='rgba(0, 0, 0, 0.2)',
-        title="Atmospheric Presssure",
-        xaxis_title="Time",
-        yaxis_title="Pressure [bar]",
-        xaxis_tickformat=tick_format,  # Format time axis as HH:MM
-        template="plotly_dark",  # Choose a dark theme for better contrast
-    )
-    specific_humidity_fig.update_layout(
-        paper_bgcolor='rgba(0,0,0,0.2)',
-        plot_bgcolor='rgba(0, 0, 0, 0.2)',
-        title="Specific Humidity",
-        xaxis_title="Time",
-        yaxis_title="S.H. [g/Kg]",
-        xaxis_tickformat=tick_format,  # Format time axis as HH:MM
-        template="plotly_dark",  # Choose a dark theme for better contrast
-    )
-    analog_temperature_fig.update_layout(
-        paper_bgcolor='rgba(0,0,0,0.2)',
-        plot_bgcolor='rgba(0, 0, 0, 0.2)',
-        title="Old Analog Temperature Sensor (Interior, deprecated)",
-        xaxis_title="Time",
-        yaxis_title="Temperature [°C]",
-        xaxis_tickformat=tick_format,  # Format time axis as HH:MM
-        template="plotly_dark",  # Choose a dark theme for better contrast
-    )
+    style_time_series_figure(temperature_fig, "Temperature", "Temperature [°C]", tick_format)
+    style_time_series_figure(humidity_fig, "Relative humidity", "Humidity [%]", tick_format)
+    style_time_series_figure(pressure_fig, "Atmospheric pressure", "Pressure [bar]", tick_format)
+    style_time_series_figure(specific_humidity_fig, "Specific humidity", "S.H. [g/kg]", tick_format)
+    style_time_series_figure(analog_temperature_fig, "Legacy analog sensor", "Temperature [°C]", tick_format)
     
     return threed_fig, temperature_fig, humidity_fig, pressure_fig, specific_humidity_fig, analog_temperature_fig, info_data
 
@@ -199,84 +207,70 @@ def compute_specific_humidity(T_interior_list, H_interior_list, P_interior_list)
 
 
 app.layout = dbc.Container([
-    dbc.Row([
-        dbc.Col(
-            dbc.Card(
-                dbc.CardBody([
-                    dbc.Row([
-                        dbc.Col(html.H1("Weather Dashboard", className="text-center"), width=12),
-                    ]),
-                    dbc.Row([
-                        dbc.Col(html.H2(f"The best dashboard shows you weather data up to the past {MARKS_TO_DAYS[-1]} days!", className="text-center"), width=12)
-                    ]),
-                    dbc.Row([
-                        dbc.Col(
-                            html.Div(
-                                [
-                                    'Like what you see? Check out the ',
-                                    html.A(
-                                        'source code', href='https://github.com/gafc98/temperature_logger', target='_blank', style={'fontSize': '12px', 'color': '#dbdbdb'}
-                                    ),
-                                    '. Would you like to receive a weekly newsletter? Check out this ',
-                                    html.A(
-                                        'form', href=NEWSLETTER_LINK, target='_blank', style={'fontSize': '12px', 'color': '#dbdbdb'}
-                                    ),
-                                    '.'
-                                ],
-                                style={'display': 'inline-block', 'fontSize': '12px'}
-                            ),
-                            width=12,
-                            style={'text-align': 'center', 'margin-bottom': '20px'}
-                        )
-                    ]),
-                    dbc.Row([
-                        dbc.Col(
-                            dcc.Slider(
-                                id='slider',
-                                min=0,
-                                max=len(MARKS_TO_DAYS)-1,
-                                value=0,
-                                step=None,
-                                marks={i: {'label': f'{MARKS_TO_DAYS[i]} days', 'style': {'color': 'white', 'font-family': 'Arial', 'white-space': 'nowrap'}} for i in range(len(MARKS_TO_DAYS))}
-                            ),
-                            width=12,
-                            style={'text-align': 'center', 'margin-bottom': '20px'}
-                        )
-                    ]),
-                    dbc.Row([
-                        dash_table.DataTable(
-                            id='info-data',
-                            columns=[{'id': 'Latest Value', 'name': 'Latest Value'}, {'id': 'Interior', 'name': 'Interior'}, {'id': 'Exterior', 'name': 'Exterior'}],
-                            style_table={'minWidth': '300px'},
-                            style_cell={'textAlign': 'center', 'backgroundColor': 'rgba(0, 0, 0, 0.2)'},
-                            style_header={'backgroundColor': 'rgba(0, 0, 0, 0.4)', 'fontWeight': 'bold'}
-                        )
-                            
-                    ]),
-                    dbc.Row([
-                        dbc.Col(dcc.Loading(id='loading-output1', children=dcc.Graph(id='3d-scatter-graph')), width=12)
-                    ]),
-                    dbc.Row([
-                        dbc.Col(dcc.Loading(id='loading-output2', children=dcc.Graph(id='temperature-graph')), width=12)
-                    ]),
-                    dbc.Row([
-                        dbc.Col(dcc.Loading(id='loading-output3', children=dcc.Graph(id='humidity-graph')), width=12)
-                    ]),
-                    dbc.Row([
-                        dbc.Col(dcc.Loading(id='loading-output4', children=dcc.Graph(id='pressure-graph')), width=12)
-                    ]),
-                    dbc.Row([
-                        dbc.Col(dcc.Loading(id='loading-output5', children=dcc.Graph(id='specific-humidity-graph')), width=12)
-                    ]),
-                    dbc.Row([
-                        dbc.Col(dcc.Loading(id='loading-output6', children=dcc.Graph(id='analog-temperature-graph')), width=12)
-                    ])
-                ]),
-                className="border rounded"
-            )
-        )
-    ])
-])
+    html.Header([
+        html.Div([
+            html.P("MICROCLIMATE / EINDHOVEN", className="eyebrow"),
+            html.H1("Weather, in context"),
+            html.P("Live conditions, measured indoors and out.", className="intro-copy"),
+        ]),
+        html.Nav([
+            html.A("Project source", href="https://github.com/gafc98/temperature_logger", target="_blank", rel="noreferrer"),
+            html.A("Weekly report", href=NEWSLETTER_LINK, target="_blank", rel="noreferrer"),
+        ], className="header-links"),
+    ], className="masthead"),
+    html.Section([
+        html.Div([
+            html.P("HISTORY WINDOW", className="eyebrow"),
+            html.P("Choose a period", className="section-title"),
+        ]),
+        dcc.Slider(
+            id="slider",
+            min=0,
+            max=len(MARKS_TO_DAYS) - 1,
+            value=0,
+            step=None,
+            marks={i: {"label": f"{MARKS_TO_DAYS[i]}d"} for i in range(len(MARKS_TO_DAYS))},
+            className="range-slider",
+        ),
+    ], className="range-panel"),
+    html.Section([
+        html.Div([
+            html.P("LATEST READINGS", className="eyebrow"),
+            html.P("Interior and exterior", className="section-title"),
+        ], className="section-heading"),
+        dash_table.DataTable(
+            id="info-data",
+            columns=[
+                {"id": "Latest Value", "name": "Measure"},
+                {"id": "Interior", "name": "Inside"},
+                {"id": "Exterior", "name": "Outside"},
+            ],
+            style_table={"overflowX": "auto"},
+            style_cell={"textAlign": "left", "padding": "14px 18px", "border": "none"},
+            style_header={"fontWeight": "600", "border": "none"},
+        ),
+    ], className="readings-panel"),
+    html.Section([
+        html.Div([
+            html.P("THE SENSOR RECORD", className="eyebrow"),
+            html.P("Explore the measurements", className="section-title"),
+        ], className="section-heading"),
+        dbc.Row([
+            dbc.Col(dcc.Loading(dcc.Graph(id="3d-scatter-graph", config={"displayModeBar": False}, style={"height": "560px"})), width=12),
+        ], className="chart-row"),
+        dbc.Row([
+            dbc.Col(dcc.Loading(dcc.Graph(id="temperature-graph", config={"displayModeBar": False}, style={"height": "350px"})), xs=12, lg=6),
+            dbc.Col(dcc.Loading(dcc.Graph(id="humidity-graph", config={"displayModeBar": False}, style={"height": "350px"})), xs=12, lg=6),
+            dbc.Col(dcc.Loading(dcc.Graph(id="pressure-graph", config={"displayModeBar": False}, style={"height": "350px"})), xs=12, lg=6),
+            dbc.Col(dcc.Loading(dcc.Graph(id="specific-humidity-graph", config={"displayModeBar": False}, style={"height": "350px"})), xs=12, lg=6),
+        ], className="chart-row g-3"),
+    ], className="charts-section"),
+    html.Details([
+        html.Summary("Legacy analog sensor"),
+        dcc.Graph(id="analog-temperature-graph", config={"displayModeBar": False}, style={"height": "350px"}),
+    ], className="legacy-panel"),
+    html.Footer("Temperature Logger · Eindhoven", className="page-footer"),
+], fluid=True, className="dashboard")
 
 
 if __name__ == '__main__':

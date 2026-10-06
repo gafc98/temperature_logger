@@ -3,6 +3,7 @@
 #include <chrono>
 #include <string.h>
 #include <sstream>
+#include <thread>
 #include "include/i2c_bus.cpp"
 #include "include/ads1115.cpp"
 #include "include/bme280.cpp"
@@ -123,7 +124,7 @@ int start_measuring()
         int ret_code_sum = 0;
         for (size_t i = 0; i < AVERAGE; i++)
         {
-            auto t_start = std::chrono::high_resolution_clock::now();
+            auto t_start = std::chrono::steady_clock::now();
 
             T_int = -66.875 + 218.75 * adc.read_voltage() / 3.3;
             average_T_int += T_int;
@@ -163,10 +164,7 @@ int start_measuring()
                     display.put_string(to_string(P_exterior));
                 }
             }
-            auto t_end = std::chrono::high_resolution_clock::now();
-            float elapsed_time_us = std::chrono::duration<float, std::micro>(t_end - t_start).count();
-
-            usleep(SLEEP_TIME - elapsed_time_us);
+            std::this_thread::sleep_until(t_start + std::chrono::microseconds(SLEEP_TIME));
         }
         average_T_int /= AVERAGE;
         average_T_interior /= AVERAGE;
